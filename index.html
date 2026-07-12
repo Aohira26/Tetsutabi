@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マイ鉄旅ログ</title>
+    <style>
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
+        .container { max-width: 650px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #005bac; text-align: center; border-bottom: 3px solid #005bac; padding-bottom: 10px; }
+        .form-group { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; position: relative; }
+        .editing-mode { background: #fffde7 !important; border: 2px solid #fbc02d; }
+        .entry-type-selector { margin-bottom: 15px; display: flex; gap: 10px; padding-right: 30px; }
+        .entry-type-selector label { cursor: pointer; flex: 1; text-align: center; background: #eee; padding: 10px; border-radius: 6px; }
+        .entry-type-selector input { display: none; }
+        .entry-type-selector label:has(input:checked) { background: #e0f0ff; border: 2px solid #005bac; font-weight: bold; }
+        
+        .leg-group { border-left: 5px solid #005bac; padding: 20px 35px 15px 40px; margin-bottom: 15px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; cursor: default; }
+        .leg-group.dragging { opacity: 0.5; border: 2px dashed #005bac; background: #f0f8ff; }
+        .drag-handle { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: grab; font-size: 20px; color: #aaa; user-select: none; padding: 5px; }
+        .drag-handle:active { cursor: grabbing; color: #005bac; }
+        
+        label { font-weight: bold; display: block; margin-top: 10px; font-size: 0.85em; color: #555; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .flex-row { display: flex; gap: 10px; }
+        .flex-row > div { flex: 1; min-width: 0; }
+        button { padding: 10px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        .btn-add { background: #e0f7fa; color: #00838f; width: 100%; }
+        .btn-save { background: #005bac; color: white; width: 100%; padding: 15px; font-size: 18px; margin-top: 20px; }
+        .btn-delete { background: #ff5252; color: white; padding: 5px 10px; font-size: 12px; border-radius: 4px; }
+        .btn-edit { background: #ffc107; color: #333; padding: 5px 10px; font-size: 12px; border-radius: 4px; margin-right: 5px; }
+        .btn-card-share { background: #4caf50; color: white; padding: 5px 10px; font-size: 12px; border-radius: 4px; margin-right: 5px; }
+        
+        .btn-remove-leg { position: absolute; right: 10px; top: 8px; background: none; color: #aaa; border: none; width: auto; height: auto; font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; margin-top: 0; padding: 0; transition: color 0.2s; }
+        .btn-remove-leg:hover { color: #ff5252; background: none; }
+        
+        .share-area { margin-top: 40px; padding-top: 20px; border-top: 2px dashed #ccc; display: flex; gap: 10px; }
+        .btn-share { background: #607d8b; color: white; flex: 1; font-size: 14px; }
+        .btn-import { background: #9e9e9e; color: white; flex: 1; font-size: 14px; }
+        .trip-card { background: #fff; padding: 20px; margin-top: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #005bac; overflow: hidden; }
+        .trip-actions { float: right; }
+        .trip-date { font-size: 0.9em; color: #666; font-weight: bold; margin-bottom: 20px; }
+        .trip-header { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px 0; }
+        .trip-header-left { display: flex; align-items: center; gap: 10px; }
+        .trip-header h3 { margin: 0; }
+        .total-trip-fare { font-size: 0.9em; color: #e65100; font-weight: bold; background: #fff3e0; padding: 2px 8px; border-radius: 4px; border: 1px solid #ffe0b2; }
+        .trip-passenger-count { font-size: 0.85em; color: #555; background: #e0f0ff; padding: 2px 6px; border-radius: 4px; border: 1px solid #b3d7ff; }
+        
+        .timeline { position: relative; padding-left: 65px; padding-top: 10px; margin-top: 15px; }
+        .timeline::before { content: ''; position: absolute; left: 76px; top: 0; bottom: 0; width: 6px; background: #ccc; z-index: 1; }
+        .st-node { position: relative; min-height: 54px; display: flex; align-items: center; z-index: 5; margin: -2px 0; }
+        .st-time-box { position: absolute; left: -65px; width: 55px; text-align: right; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+        .st-time-val { font-weight: bold; font-size: 1em; color: #333; line-height: 1.2; }
+        .st-icon { position: absolute; left: 3px; width: 18px; height: 18px; background: white; border: 4px solid #888; border-radius: 50%; z-index: 10; }
+        .st-info { padding-left: 35px; flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+        .st-name { font-weight: bold; font-size: 1.15em; }
+        .st-track-group { display: inline-flex; flex-direction: column; gap: 2px; margin-left: 5px; }
+        .st-track { font-size: 0.85em; color: #777; background: #eee; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+        .st-track-text { font-size: 10px; }
+        
+        .trans-box { position: relative; padding: 15px 0 15px 35px; min-height: 40px; z-index: 2; }
+        .trans-box .t-line { position: absolute; left: 11px; top: -10px; bottom: -10px; width: 6px; z-index: 3; }
+        .trans-line-walk { background: repeating-linear-gradient(to bottom, #ccc, #ccc 5px, white 5px, white 10px); }
+        .trans-line-train { background: #005bac; }
+        .trans-line-bus { background: #28a745; }
+        .trans-line-air { background: #00a8e8; }
+        .trans-line-ferry { background: #00838f; }
+        .trans-detail { font-size: 0.95em; line-height: 1.5; color: #333; }
+        .trans-direct { font-size: 0.85em; color: #e65100; font-weight: bold; background: #fff3e0; padding: 1px 5px; border-radius: 3px; border: 1px solid #ffe0b2; margin-left: 6px; }
+        .trans-seat-info { font-size: 0.85em; color: #3f51b5; background: #e8eaf6; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-top: 4px; display: inline-block; border: 1px solid #c5cae9; }
+        .trans-memo { font-size: 0.85em; color: #555; background: #f5f5f5; padding: 6px; border-radius: 4px; margin-top: 4px; border-left: 3px solid #ccc; }
+        
+        .color-walk { color: #888 !important; }
+        .color-train { color: #005bac !important; }
+        .color-bus { color: #28a745 !important; }
+        .color-air { color: #00a8e8 !important; }
+        .color-ferry { color: #00838f !important; }
+        
+        /* カスタム種別の装飾スタイル（背景色ではなく文字色を変えるように修正） */
+        .custom-type-badge { background-color: transparent !important; font-weight: bold; padding: 0 2px; border-radius: 0; }
+        
+        .spot-card { margin: 15px 0 15px -45px; background: #fffde7; border: 1px solid #f9e79f; padding: 12px 12px 12px 45px; border-radius: 8px; position: relative; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .spot-card::before { content: '📍'; position: absolute; left: 15px; top: 12px; font-size: 1.2em; z-index: 12; }
+        
+        .fare-badge { font-size: 0.85em; color: #e65100; background: #fff3e0; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 8px; border: 1px solid #ffe0b2; }
+        .fare-badge-total { font-size: 0.8em; color: #c62828; background: #ffebee; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 4px; border: 1px solid #ffcdd2; }
+        .exp-fare-badge { font-size: 0.85em; color: #b71c1c; background: #ffebee; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 4px; border: 1px solid #ffcdd2; }
+
+        .floating-menu { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; align-items: center; }
+        
+        .btn-float { width: 50px; height: 50px; border-radius: 50%; border: none; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .btn-color-toggle { background: #4caf50; color: white; }
+        .btn-calc-toggle { background: #ff9800; color: white; }
+        .btn-feedback-toggle { background: #00bcd4; color: white; }
+        .btn-float.btn-admin-toggle { background: #3f51b5; color: white; }
+        
+        .calc-sidebar { position: fixed; top: 0; right: -300px; width: 260px; height: 100%; background: #333; color: white; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.3); transition: right 0.3s ease; z-index: 2000; box-sizing: border-box; }
+        .calc-sidebar.open { right: 0; }
+        .calc-sidebar.open ~ .container { display: none; }
+        .calc-screen { width: 100%; height: 50px; background: #fff; color: #333; text-align: right; padding: 10px; font-size: 24px; font-weight: bold; border-radius: 6px; border: none; box-sizing: border-box; margin-bottom: 15px; }
+        .calc-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .btn-c { padding: 15px 0; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; background: #555; color: white; }
+        .btn-c:hover { background: #666; }
+        .btn-c.op { background: #ff9800; }
+        .btn-c.eq { background: #e65100; }
+        
+        /* 自由設定カラー用のサイドバーデザイン */
+        .color-sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: #2c3e50; color: white; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.3); transition: right 0.3s ease; z-index: 2000; box-sizing: border-box; overflow-y: auto; }
+        .color-sidebar.open { right: 0; }
+        .color-setting-row { display: flex; gap: 5px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.1); padding: 6px; border-radius: 6px; }
+        .color-setting-row input[type="text"] { padding: 4px; font-size: 12px; border-radius: 4px; border: none; }
+        .color-setting-row input[type="color"] { width: 40px; height: 28px; border: none; padding: 0; background: none; cursor: pointer; }
+        .btn-delete-setting { background: #ff5252; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+
+        .feedback-sidebar { position: fixed; top: 0; right: -300px; width: 260px; height: 100%; background: #004d40; color: white; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.3); transition: right 0.3s ease; z-index: 2000; box-sizing: border-box; overflow-y: auto; }
+        .feedback-sidebar.open { right: 0; }
+        .feedback-sidebar label { color: #e0f2f1; margin-top: 8px; }
+        .feedback-sidebar input[type="text"], .feedback-sidebar input[type="email"] { background: #fff; color: #333; padding: 6px; margin-top: 3px; font-size: 13px; }
+        .feedback-text { width: 100%; height: 100px; background: #fff; color: #333; padding: 10px; font-size: 13px; border-radius: 6px; border: none; box-sizing: border-box; margin-bottom: 15px; resize: none; margin-top: 3px; }
+
+        .admin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
+        .admin-box { background: white; width: 90%; max-width: 550px; max-height: 85vh; border-radius: 12px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); overflow-y: auto; position: relative; color: #333; }
+        .admin-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; font-weight: bold; }
+        .admin-log-item { background: #f5f5f5; padding: 10px; margin-top: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3f51b5; }
+        .admin-log-info { font-size: 14px; }
+
+        #password-lock-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 9999; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .lock-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
+        .lock-container h2 { color: #005bac; margin-top: 0; font-size: 1.4em; }
+        .lock-container input[type="password"] { padding: 12px; font-size: 16px; margin: 15px 0; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box; text-align: center; }
+        .lock-container button { width: 100%; padding: 12px; background: #005bac; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .lock-container button:hover { background: #004480; }
+        .lock-error { color: #ff5252; margin-top: 10px; font-size: 14px; font-weight: bold; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 12px; border-radius: 8px; }
+            h1 { font-size: 1.5em; }
+            .flex-row { flex-direction: column; gap: 5px; }
+            .flex-row > div { width: 100% !important; max-width: 100% !important; }
+            .flex-row .flex-row { flex-direction: row; }
+            .leg-group { padding: 20px 15px 15px 30px; }
+            .drag-handle { left: 5px; font-size: 18px; }
+            .btn-remove-leg { right: 8px; top: 6px; font-size: 22px; }
+            .timeline { padding-left: 55px; }
+            .timeline::before { left: 66px; }
+            .st-node { min-height: 48px; }
+            .st-time-box { left: -55px; width: 48px; }
+            .st-time-val { font-size: 0.9em; }
+            .st-icon { left: 3px; width: 14px; height: 14px; border-width: 3px; }
+            .st-info { padding-left: 28px; gap: 2px; }
+            .st-name { font-size: 1em; }
+            .st-track { font-size: 0.75em; padding: 1px 3px; }
+            .spot-card { margin: 10px 0 10px -35px; padding: 10px 10px 10px 35px; font-size: 0.9em; }
+            .spot-card::before { left: 10px; top: 10px; font-size: 1em; }
+            .trip-actions { float: none; display: flex; gap: 5px; margin-bottom: 10px; justify-content: flex-end; }
+            .trip-header-left { flex-wrap: wrap; }
+            .share-area { flex-direction: column; gap: 8px; }
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div id="password-lock-screen">
+    <div class="lock-container">
+        <h2>🔒 パスワード保護</h2>
+        <p style="font-size: 13px; color: #555; margin: 0;">この旅の予定はパスワードで保護されています。<br>共有されたパスワードを入力してな！</p>
+        <input type="password" id="shared-password-input" placeholder="パスワードを入力">
+        <button onclick="verifySharedPassword()">開く</button>
+        <div id="lock-error-message" class="lock-error"></div>
+    </div>
+</div>
+
+<div class="container" id="app-body">
+    <h1>🚃 マイ鉄旅ログ</h1>
+    <div id="main-form" class="form-group">
+        <input type="hidden" id="edit-id" value="">
+        
+        <div id="admin-id-zone" style="display: none; background: #e0f0ff; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #b3d7ff;">
+            <label style="margin-top: 0; color: #005bac;">⚠️ 管理者モード：ドキュメントID（ランダム）</label>
+            <input type="text" id="edit-id-input" style="font-weight: bold; color: #005bac;">
+            <label style="margin-top: 5px; color: #005bac;">管理者モード：暗号化パスワードハッシュ（編集時のみ有効）</label>
+            <input type="text" id="edit-pass-input" placeholder="変更しない場合は空欄">
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div style="flex: 1; margin-right: 15px;">
+                <label style="margin-top: 0;">旅のタイトル</label>
+                <input type="text" id="trip-title" style="margin-top: 4px;">
+                <div style="font-size: 11px; color: #888; margin-top: 4px;">データはページの改善に利用させていただくことがあります。</div>
+            </div>
+            
+            <div style="width: 80px; margin-right: 15px;">
+                <label style="margin-top: 0;">人数</label>
+                <select id="trip-passengers" style="margin-top: 4px;" onchange="updateFormTotalFare()">
+                    <option value="1">1名</option>
+                    <option value="2">2名</option>
+                    <option value="3" selected>3名</option>
+                    <option value="4">4名</option>
+                    <option value="5">5名</option>
+                </select>
+            </div>
+            <span id="form-total-fare" style="font-size: 0.9em; color: #e65100; font-weight: bold; margin-bottom: 12px; white-space: nowrap;"></span>
+        </div>
+        
+        <div>
+            <label>旅行全体のメモ</label>
+            <textarea id="trip-memo" rows="2" placeholder="旅行全体の計画や持ち物、思い出などを自由に書いてな" style="margin-top: 4px; resize: vertical;"></textarea>
+        </div>
+        
+        <div class="flex-row">
+            <div>
+                <label>日付</label>
+                <div class="flex-row" style="align-items: center; gap:4px;">
+                    <input type="number" id="sy" min="1" style="text-align:center; padding:8px 2px;">年
+                    <input type="number" id="sm" min="1" max="12" style="text-align:center; padding:8px 2px;">月
+                    <input type="number" id="sd" min="1" max="31" style="text-align:center; padding:8px 2px;">日
+                </div>
+            </div>
+            <div>
+                <label>閲覧制限（任意）</label>
+                <input type="password" id="trip-password" placeholder="パスワード(半角英数)" style="margin-top: 4px;">
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0;">行程一覧 (ドラッグで移動可能)</h3>
+            </div>
+            <div id="legs-container"></div>
+            <button class="btn-add" onclick="addLeg()">＋ 行程（移動／スポット）を追加</button>
+        </div>
+        <button class="btn-save" id="btn-save-trip" onclick="saveTrip()">保存（Firestoreにアップロード）</button>
+        <button class="btn-save" id="btn-cancel-edit" style="display: none; background: #757575; margin-top: 10px;" onclick="cancelEdit()">編集をキャンセル</button>
+    </div>
+
+    <div class="share-area">
+        <button class="btn-share" onclick="generateShareUrl()">🔗 この旅の共有リンクを取得</button>
+        <button class="btn-import" onclick="importTripPrompt()">📥 共有コードから読込</button>
+    </div>
+
+    <div id="logs-container"></div>
+</div>
+
+<div class="floating-menu">
+    <button class="btn-float btn-color-toggle" onclick="toggleColorSidebar()" title="カスタムカラー設定">🎨</button>
+    <button class="btn-float btn-calc-toggle" onclick="toggleCalc()" title="簡易計算機">🧮</button>
+    <button class="btn-float btn-feedback-toggle" onclick="toggleFeedback()" title="不具合報告・要望">💬</button>
+    <button class="btn-float btn-admin-toggle" onclick="openAdminModal()" title="全データ管理">🔑</button>
+</div>
+
+<div id="calc-sidebar" class="calc-sidebar">
+    <h3 style="margin-top:0;">🧮 簡易計算機</h3>
+    <input type="text" id="calc-screen" class="calc-screen" readonly value="0">
+    <div class="calc-buttons">
+        <button class="btn-c" onclick="pressCalc('7')">7</button>
+        <button class="btn-c" onclick="pressCalc('8')">8</button>
+        <button class="btn-c" onclick="pressCalc('9')">9</button>
+        <button class="btn-c op" onclick="pressCalc('/')">÷</button>
+
+        <button class="btn-c" onclick="pressCalc('4')">4</button>
+        <button class="btn-c" onclick="pressCalc('5')">5</button>
+        <button class="btn-c" onclick="pressCalc('6')">6</button>
+        <button class="btn-c op" onclick="pressCalc('*')">×</button>
+
+        <button class="btn-c" onclick="pressCalc('1')">1</button>
+        <button class="btn-c" onclick="pressCalc('2')">2</button>
+        <button class="btn-c" onclick="pressCalc('3')">3</button>
+        <button class="btn-c op" onclick="pressCalc('-')">-</button>
+
+        <button class="btn-c" onclick="pressCalc('C')">C</button>
+        <button class="btn-c" onclick="pressCalc('0')">0</button>
+        <button class="btn-c eq" onclick="pressCalc('=')">=</button>
+        <button class="btn-c op" onclick="pressCalc('+')">+</button>
+    </div>
+    <button class="btn-c" style="width:100%; margin-top:20px; background:#555;" onclick="toggleCalc()">閉じる</button>
+</div>
+
+<div id="color-sidebar" class="color-sidebar">
+    <h3 style="margin-top:0;">🎨 自由設定カラー</h3>
+    <p style="font-size:11px; color:#ccc; margin-bottom:15px;">登録したキーワードが含まれる「種別」の文字色を自動で変更します。</p>
+    <div id="color-settings-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <button class="btn-c" style="width:100%; margin-top:15px; background:#27ae60; font-size:14px;" onclick="addCustomColorRow('新快速', '#e74c3c')">＋ 設定を追加</button>
+    <button class="btn-c" style="width:100%; margin-top:10px; background:#7f8c8d; font-size:14px;" onclick="toggleColorSidebar()">閉じる</button>
+</div>
+
+<div id="feedback-sidebar" class="feedback-sidebar">
+    <h3 style="margin-top:0;">💬 要望・不具合報告</h3>
+    <label>お名前（任意）</label>
+    <input type="text" id="fb-name" placeholder="匿名">
+    <label>メールアドレス（任意）</label>
+    <input type="text" id="fb-email" placeholder="任意">
+    <label>報告内容</label>
+    <textarea id="fb-content" class="feedback-text" placeholder="不具合や追加してほしい機能など、自由に書いてな"></textarea>
+    <button class="btn-c op" style="width:100%;" onclick="sendFeedback()">送信する</button>
+    <button class="btn-c" style="width:100%; margin-top:10px; background:#555;" onclick="toggleFeedback()">閉じる</button>
+</div>
+
+<div id="admin-modal" class="admin-modal">
+    <div class="admin-box">
+        <button class="admin-close" onclick="closeAdminModal()">×</button>
+        <h3 style="margin-top:0; color:#3f51b5;">🔑 データベース全旅行一覧</h3>
+        
+        <div id="adminAuthArea" style="background:#f5f5f5; padding:15px; border-radius:8px; border:1px solid #ddd; text-align:center;">
+            <p style="margin-top:0; font-weight:bold;">管理者パスワードを入力してな！</p>
+            <input type="text" id="adminUser" placeholder="ユーザー名" style="max-width:200px; margin-bottom:10px; text-align:center;"><br>
+            <input type="password" id="adminPass" placeholder="パスワード" style="max-width:200px; margin-bottom:15px; text-align:center;"><br>
+            <button class="btn-save" style="margin-top:0; max-width:15px; padding:10px 20px; font-size:14px; width:auto; display:inline-block;" onclick="checkAdminAuth()">認証する</button>
+        </div>
+
+        <div id="adminDashboardArea" style="display:none; margin-top:10px;">
+            <p style="font-size:12px; color:#666;">Firestore内の全レコードです。削除や編集、公開制限パスワードの確認ができます。</p>
+            <div id="admin-logs-list" style="margin-top:15px; display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------
+    // Firebase 初期設定 (実際のキーに置き換えてな)
+    // --------------------------------------------------
+    const firebaseConfig = {
+        apiKey: "AIzaSyDE_YOUR_API_KEY_HERE",
+        authDomain: "my-tetsu-trip-log.firebaseapp.com",
+        projectId: "my-tetsu-trip-log",
+        storageBucket: "my-tetsu-trip-log.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:1234567890:web:abcdef123456"
+    };
+    
+    // 二重初期化を防ぐ
+    let app;
+    if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+    } else {
+        app = firebase.app();
+    }
+    const db = firebase.firestore();
+
+    // --------------------------------------------------
+    // アプリ用グローバル変数
+    // --------------------------------------------------
+    let legCounter = 0;
+    let customColorSettings = [
+        { keyword: "特急", color: "#e74c3c" },
+        { keyword: "新快速", color: "#2980b9" },
+        { keyword: "快速", color: "#27ae60" },
+        { keyword: "普通", color: "#7f8c8d" }
+    ];
+
+    // --------------------------------------------------
+    // 初期化処理（ロード時）
+    // --------------------------------------------------
+    window.addEventListener('DOMContentLoaded', async () => {
+        // 今日の日付を初期セット
+        const today = new Date();
+        document.getElementById('sy').value = today.getFullYear();
+        document.getElementById('sm').value = today.getMonth() + 1;
+        document.getElementById('sd').value = today.getDate();
+        
+        loadCustomColorSettings();
+        renderColorSettingsList();
+        updateFormTotalFare();
+
+        // 共有URLパラメータ（?id=xxx&p=yyy）のチェック
+        const params = new URLSearchParams(window.location.search);
+        const sharedId = params.get('id');
+        const passParam = params.get('p'); // URLに含まれる生パスワード
+        
+        if (sharedId) {
+            await loadSharedTrip(sharedId, passParam);
+        } else {
+            // 通常モードなら全データ一覧を表示
+            displayLogs();
+        }
+    });
+
+    // --------------------------------------------------
+    // 共有リンク読み込みモード
+    // --------------------------------------------------
+    let cachedSharedDocData = null; // 閲覧用パスワード確認保持
+    let cachedSharedDocId = null;
+
+    async function loadSharedTrip(id, urlPass) {
+        const appBody = document.getElementById('app-body');
+        try {
+            const doc = await db.collection('trips').doc(id).get();
+            if (!doc.exists) {
+                appBody.innerHTML = `<h1>🚃 マイ鉄旅ログ</h1><p style="text-align:center;color:red;font-weight:bold;margin-top:40px;">⚠️ 指定された旅のデータが見つかりません。</p>`;
+                return;
+            }
+            const data = doc.data();
+            
+            // パスワード制限があるか確認
+            const finalPass = data.password || data.passwordHash;
+            if (finalPass && finalPass.trim() !== "") {
+                cachedSharedDocData = data;
+                cachedSharedDocId = id;
+                
+                // URLにパスワードが含まれているなら自動自動認証
+                if (urlPass && (urlPass === (data.password || '').trim() || cyrb128Hash(urlPass) === (data.passwordHash || '').trim())) {
+                    renderSharedTripCard(id, data);
+                } else {
+                    // ロック画面を出す
+                    document.getElementById('password-lock-screen').style.display = 'flex';
+                }
+            } else {
+                // パスワードなし
+                renderSharedTripCard(id, data);
+            }
+        } catch (e) {
+            console.error(e);
+            appBody.innerHTML = `<h1>🚃 マイ鉄旅ログ</h1><p style="text-align:center;color:red;font-weight:bold;margin-top:40px;">⚠️ データの読み込みに失敗しました。</p>`;
+        }
+    }
+
+    function verifySharedPassword() {
+        const input = document.getElementById('shared-password-input').value.trim();
+        const errorDiv = document.getElementById('lock-error-message');
+        if (!cachedSharedDocData) return;
+        
+        const targetPass = cachedSharedDocData.password || '';
+        const targetHash = cachedSharedDocData.passwordHash || '';
+        
+        if ((targetPass !== '' && input === targetPass.trim()) || (targetHash !== '' && cyrb128Hash(input) === targetHash.trim())) {
+            document.getElementById('password-lock-screen').style.display = 'none';
+            renderSharedTripCard(cachedSharedDocId, cachedSharedDocData);
+        } else {
+            errorDiv.innerText = "❌ パスワードが違います。もう一度入力してな！";
+        }
+    }
+
+    function renderSharedTripCard(id, data) {
+        const appBody = document.getElementById('app-body');
+        appBody.innerHTML = `
+            <h1>🚃 マイ鉄旅ログ</h1>
+            <div style="text-align:center; margin-bottom:15px;">
+                <button class="btn-c" style="background:#005bac; font-size:14px; padding:8px 15px;" onclick="window.location.href=window.location.pathname">🏠 自分も旅の予定を作る</button>
+            </div>
+            <div id="shared-card-zone"></div>
+        `;
+        const zone = document.getElementById('shared-card-zone');
+        const card = createTripCardElement(id, data, true); // 閲覧専用モード
+        zone.appendChild(card);
+    }
+
+    // --------------------------------------------------
+    // フォームFare（運賃）の合計リアルタイム更新
+    // --------------------------------------------------
+    function updateFormTotalFare() {
+        const passengerCount = parseInt(document.getElementById('trip-passengers').value) || 1;
+        let sumBase = 0;
+        let sumExp = 0;
+        
+        const baseInputs = document.querySelectorAll('.leg-fare-input');
+        baseInputs.forEach(input => { sumBase += parseInt(input.value) || 0; });
+        
+        const expInputs = document.querySelectorAll('.leg-exp-fare-input');
+        expInputs.forEach(input => { sumExp += parseInt(input.value) || 0; });
+        
+        const totalOne = sumBase + sumExp;
+        const totalAll = totalOne * passengerCount;
+        
+        const displaySpan = document.getElementById('form-total-fare');
+        if (totalOne > 0) {
+            displaySpan.innerHTML = `1人あたり: ¥${totalOne.toLocaleString()} <span style="color:#c62828;">(合計: ¥${totalAll.toLocaleString()})</span>`;
+        } else {
+            displaySpan.innerHTML = "";
+        }
+    }
+
+    // --------------------------------------------------
+    // 行程（Leg）の動的追加
+    // --------------------------------------------------
+    function addLeg(savedData = null) {
+        legCounter++;
+        const container = document.getElementById('legs-container');
+        const div = document.createElement('div');
+        div.className = 'leg-group';
+        div.id = `leg-group-${legCounter}`;
+        div.setAttribute('draggable', 'true');
+        
+        // 保存データがある場合の初期値
+        const type = savedData ? savedData.type : 'train';
+        const isSpot = type === 'spot';
+        
+        div.innerHTML = `
+            <div class="drag-handle">☰</div>
+            <button class="btn-remove-leg" onclick="removeLeg(${legCounter})">×</button>
+            
+            <div class="entry-type-selector">
+                <label><input type="radio" name="leg_type_${legCounter}" value="train" ${type==='train'?'checked':''} onchange="switchLegType(${legCounter}, 'train')">🚂 鉄道</label>
+                <label><input type="radio" name="leg_type_${legCounter}" value="bus" ${type==='bus'?'checked':''} onchange="switchLegType(${legCounter}, 'bus')">🚌 バス</label>
+                <label><input type="radio" name="leg_type_${legCounter}" value="spot" ${isSpot?'checked':''} onchange="switchLegType(${legCounter}, 'spot')">📍 観光/宿泊</label>
+                <label><input type="radio" name="leg_type_${legCounter}" value="walk" ${type==='walk'?'checked':''} onchange="switchLegType(${legCounter}, 'walk')">🚶 徒歩</label>
+                <label><input type="radio" name="leg_type_${legCounter}" value="other" ${(!['train','bus','spot','walk'].includes(type))?'checked':''} onchange="switchLegType(${legCounter}, 'other')">⚓ その他</label>
+            </div>
+
+            <div id="other-type-zone-${legCounter}" style="display: ${(!['train','bus','spot','walk'].includes(type))?'block':'none'}; margin-bottom:10px;">
+                <label>アイコン・種別名 (例: ✈️ 飛行機, 🚢 フェリー)</label>
+                <input type="text" class="leg-custom-type" value="${savedData ? savedData.type : ''}" placeholder="✈️ 飛行機">
+            </div>
+
+            <div id="transport-fields-${legCounter}" style="display: ${isSpot ? 'none' : 'block'};">
+                <div class="flex-row">
+                    <div>
+                        <label>出発駅/場所</label>
+                        <input type="text" class="leg-dep-station" value="${savedData?.dep || ''}">
+                    </div>
+                    <div style="max-width: 90px;">
+                        <label>出発時刻</label>
+                        <input type="time" class="leg-dep-time" value="${savedData?.depTime || ''}">
+                    </div>
+                </div>
+                
+                <div class="flex-row" style="margin-top: 8px;">
+                    <div style="flex: 1.5;">
+                        <label>列車名・設備 (例: 快速 / ひのとり / 特急・個室)</label>
+                        <input type="text" class="leg-train-name" value="${savedData?.lineName || ''}">
+                    </div>
+                    <div>
+                        <label>のりば</label>
+                        <input type="text" class="leg-track-dep" placeholder="○番線" value="${savedData?.trackDep || ''}">
+                    </div>
+                </div>
+
+                <div class="flex-row" style="margin-top: 8px;">
+                    <div>
+                        <label>運賃 (1人分)</label>
+                        <input type="number" class="leg-fare-input" placeholder="¥ 0" value="${savedData?.fare || ''}" onchange="updateFormTotalFare()">
+                    </div>
+                    <div>
+                        <label>特急/指定席券 (1人分)</label>
+                        <input type="number" class="leg-exp-fare-input" placeholder="¥ 0" value="${savedData?.expFare || ''}" onchange="updateFormTotalFare()">
+                    </div>
+                </div>
+                
+                <div style="margin-top:8px;">
+                    <label>座席情報 (例: 3号車 5A / 展望車両)</label>
+                    <input type="text" class="leg-seat-info" placeholder="自由席 / 号車・座席番号など" value="${savedData?.seatInfo || ''}">
+                </div>
+
+                <div class="flex-row" style="margin-top: 8px;">
+                    <div>
+                        <label>到着駅/場所</label>
+                        <input type="text" class="leg-arr-station" value="${savedData?.arr || ''}">
+                    </div>
+                    <div style="max-width: 90px;">
+                        <label>到着時刻</label>
+                        <input type="time" class="leg-arr-time" value="${savedData?.arrTime || ''}">
+                    </div>
+                    <div style="max-width: 70px;">
+                        <label>着のりば</label>
+                        <input type="text" class="leg-track-arr" placeholder="○番線" value="${savedData?.trackArr || ''}">
+                    </div>
+                </div>
+            </div>
+
+            <div id="spot-fields-${legCounter}" style="display: ${isSpot ? 'block' : 'none'};">
+                <div class="flex-row">
+                    <div style="flex: 2;">
+                        <label>観光地・ホテル・店舗名</label>
+                        <input type="text" class="leg-spot-name" value="${savedData?.spotName || ''}">
+                    </div>
+                    <div>
+                        <label>滞在/開始時刻</label>
+                        <input type="time" class="leg-spot-time" value="${savedData?.spotTime || ''}">
+                    </div>
+                </div>
+                <div class="flex-row" style="margin-top: 8px;">
+                    <div>
+                        <label>費用・宿泊費 (1人分)</label>
+                        <input type="number" class="leg-spot-fare" placeholder="¥ 0" value="${savedData?.fare || ''}" onchange="updateFormTotalFare()">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 8px;">
+                <label>メモ・乗換の注意など</label>
+                <textarea class="leg-memo" rows="1" placeholder="自由に入力してな" style="resize: vertical;">${savedData?.memo || ''}</textarea>
+            </div>
+        `;
+        
+        container.appendChild(div);
+        setupDragAndDropEvents(div);
+        updateFormTotalFare();
+    }
+
+    function removeLeg(id) {
+        const leg = document.getElementById(`leg-group-${id}`);
+        if(leg) {
+            leg.remove();
+            updateFormTotalFare();
+        }
+    }
+
+    function switchLegType(id, type) {
+        const transFields = document.getElementById(`transport-fields-${id}`);
+        const spotFields = document.getElementById(`spot-fields-${id}`);
+        const otherZone = document.getElementById('other-type-zone-' + id);
+        
+        // 運賃キャッシュクリア用に入力欄取得
+        const fareInput = transFields.querySelector('.leg-fare-input');
+        const expInput = transFields.querySelector('.leg-exp-fare-input');
+        const spotFareInput = spotFields.querySelector('.leg-spot-fare');
+
+        if (type === 'spot') {
+            transFields.style.display = 'none';
+            spotFields.style.display = 'block';
+            otherZone.style.display = 'none';
+            fareInput.value = '';
+            expInput.value = '';
+        } else {
+            transFields.style.display = 'block';
+            spotFields.style.display = 'none';
+            spotFareInput.value = '';
+            if (type === 'other') {
+                otherZone.style.display = 'block';
+            } else {
+                otherZone.style.display = 'none';
+            }
+        }
+        updateFormTotalFare();
+    }
+
+    // --------------------------------------------------
+    // ドラッグ＆ドロップで行程を入れ替え可能にするロジック
+    // --------------------------------------------------
+    let dragSrcElement = null;
+
+    function setupDragAndDropEvents(element) {
+        element.addEventListener('dragstart', handleDragStart, false);
+        element.addEventListener('dragover', handleDragOver, false);
+        element.addEventListener('dragenter', handleDragEnter, false);
+        element.addEventListener('dragleave', handleDragLeave, false);
+        element.addEventListener('drop', handleDrop, false);
+        element.addEventListener('dragend', handleDragEnd, false);
+    }
+
+    function handleDragStart(e) {
+        this.classList.add('dragging');
+        dragSrcElement = this;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+    }
+
+    function handleDragOver(e) {
+        if (e.preventDefault) e.preventDefault();
+        return false;
+    }
+
+    function handleDragEnter(e) {
+        this.classList.add('over');
+    }
+
+    function handleDragLeave(e) {
+        this.classList.remove('over');
+    }
+
+    function handleDrop(e) {
+        if (e.stopPropagation) e.stopPropagation();
+        
+        if (dragSrcElement !== this) {
+            // ID属性と、中身のフォーム入力状態を丸ごと物理スワップする
+            const container = document.getElementById('legs-container');
+            const children = Array.from(container.children);
+            const srcIdx = children.indexOf(dragSrcElement);
+            const targetIdx = children.indexOf(this);
+            
+            if(srcIdx < targetIdx) {
+                container.insertBefore(dragSrcElement, this.nextSibling);
+            } else {
+                container.insertBefore(dragSrcElement, this);
+            }
+        }
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        const legs = document.querySelectorAll('.leg-group');
+        legs.forEach(leg => leg.classList.remove('over'));
+        updateFormTotalFare(); // 並び替え後の再計算
+    }
+
+    // --------------------------------------------------
+    // 簡単なハッシュ化関数 (cyrb128)
+    // --------------------------------------------------
+    function cyrb128Hash(str) {
+        let h1 = 1779033703, h2 = 3024734711, h3 = 3362625948, h4 = 502494325;
+        for (let i = 0, k; i < str.length; i++) {
+            k = str.charCodeAt(i);
+            h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+            h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+            h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+            h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+        }
+        h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+        h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+        h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+        h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+        return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0].map(x => x.toString(16).padStart(8,'0')).join('');
+    }
+
+    // --------------------------------------------------
+    // データの保存（Firestoreへ送信）
+    // --------------------------------------------------
+    async function saveTrip() {
+        const title = document.getElementById('trip-title').value.trim() || "無題の鉄旅";
+        const memo = document.getElementById('trip-memo').value.trim();
+        const passengers = parseInt(document.getElementById('trip-passengers').value) || 1;
+        const passwordInput = document.getElementById('trip-password').value.trim();
+        
+        const sy = document.getElementById('sy').value;
+        const sm = document.getElementById('sm').value.padStart(2, '0');
+        const sd = document.getElementById('sd').value.padStart(2, '0');
+        const start = `${sy}/${sm}/${sd}`;
+        
+        const legGroups = document.querySelectorAll('#legs-container .leg-group');
+        const legs = [];
+        
+        legGroups.forEach(group => {
+            // ラジオボタンからタイプを特定
+            const radioNode = group.querySelector('.entry-type-selector input:checked');
+            let type = radioNode ? radioNode.value : 'train';
+            if (type === 'other') {
+                type = group.querySelector('.leg-custom-type').value.trim() || 'その他';
+            }
+            
+            if (type === 'spot') {
+                legs.push({
+                    type: 'spot',
+                    spotName: group.querySelector('.leg-spot-name').value,
+                    spotTime: group.querySelector('.leg-spot-time').value,
+                    fare: parseInt(group.querySelector('.leg-spot-fare').value) || 0,
+                    memo: group.querySelector('.leg-memo').value
+                });
+            } else {
+                legs.push({
+                    type: type,
+                    dep: group.querySelector('.leg-dep-station').value,
+                    depTime: group.querySelector('.leg-dep-time').value,
+                    lineName: group.querySelector('.leg-train-name').value,
+                    trackDep: group.querySelector('.leg-track-dep').value,
+                    trackArr: group.querySelector('.leg-track-arr').value,
+                    fare: parseInt(group.querySelector('.leg-fare-input').value) || 0,
+                    expFare: parseInt(group.querySelector('.leg-exp-fare-input').value) || 0,
+                    seatInfo: group.querySelector('.leg-seat-info').value,
+                    arr: group.querySelector('.leg-arr-station').value,
+                    arrTime: group.querySelector('.leg-arr-time').value,
+                    memo: group.querySelector('.leg-memo').value
+                });
+            }
+        });
+        
+        const tripData = {
+            title, memo, passengers, start, legs,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // パスワード暗号化対応
+        if(passwordInput !== "") {
+            tripData.passwordHash = cyrb128Hash(passwordInput);
+            tripData.password = passwordInput; // 生パスワードも一応後方互換性で保持
+        } else {
+            // 空白の時は明示的に削除または空文字
+            tripData.passwordHash = "";
+            tripData.password = "";
+        }
+
+        const editId = document.getElementById('edit-id').value;
+        try {
+            if (editId) {
+                // 既存の編集
+                // 管理者モードチェック時にハッシュ値を直接上書き保存可能にするエリア
+                const adminIdInput = document.getElementById('edit-id-input').value;
+                if(adminIdInput && adminIdInput === editId) {
+                    const hashInput = document.getElementById('edit-pass-input').value.trim();
+                    if(hashInput !== "") {
+                        tripData.passwordHash = hashInput;
+                        tripData.password = hashInput;
+                    }
+                }
+                
+                await db.collection('trips').doc(editId).set(tripData, { merge: true });
+                alert("旅行予定を更新しました！");
+            } else {
+                // 新規登録
+                tripData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('trips').add(tripData);
+                alert("新しい旅行予定を保存しました！");
+            }
+            
+            // フォーム初期化
+            clearForm();
+            displayLogs();
+        } catch (e) {
+            console.error(e);
+            alert("データの保存に失敗しました。");
+        }
+    }
+
+    function clearForm() {
+        document.getElementById('trip-title').value = "";
+        document.getElementById('trip-memo').value = "";
+        document.getElementById('trip-password').value = "";
+        document.getElementById('legs-container').innerHTML = "";
+        document.getElementById('trip-passengers').value = "3";
+        document.getElementById('edit-id').value = "";
+        document.getElementById('btn-cancel-edit').style.display = 'none';
+        document.getElementById('admin-id-zone').style.display = "none";
+        document.getElementById('main-form').classList.remove('editing-mode');
+        
+        legCounter = 0;
+        updateFormTotalFare();
+    }
+    
+    function cancelEdit() {
+        if(confirm("編集をキャンセルしてよろしいですか？入力内容は消去されます。")) {
+            clearForm();
+        }
+    }
+
+    // --------------------------------------------------
+    // メイン画面用のデータ一覧取得＆カード描画
+    // --------------------------------------------------
+    async function displayLogs() {
+        const container = document.getElementById('logs-container');
+        if(!container) return;
+        container.innerHTML = '<p style="text-align:center; color:#666; font-size:14px; margin-top:20px;">旅の履歴を読み込み中...</p>';
+        
+        try {
+            const snapshot = await db.collection('trips').orderBy('createdAt', 'desc').limit(25).get();
+            container.innerHTML = '<h2 style="margin-top:40px; border-bottom:2px solid #333; padding-bottom:5px;">🕒 最近作成された旅の予定</h2>';
+            
+            if (snapshot.empty) {
+                container.innerHTML += '<p style="text-align:center; color:#999; font-size:14px; padding:20px;">まだ登録されている予定はありません。最初の予定を作ってみよう！</p>';
+                return;
+            }
+            
+            snapshot.forEach(doc => {
+                const card = createTripCardElement(doc.id, doc.data(), false);
+                container.appendChild(card);
+            });
+        } catch(e) {
+            console.error(e);
+            container.innerHTML = '<p style="text-align:center; color:red; font-size:14px;">履歴の読み込みに失敗しました。</p>';
+        }
+    }
+
+    // --------------------------------------------------
+    // 旅行タイムラインカードのHTML要素生成（超重要）
+    // --------------------------------------------------
+    function createTripCardElement(docId, data, isViewOnly = false) {
+        const card = document.createElement('div');
+        card.className = 'trip-card';
+        
+        // 人数取得
+        const pax = data.passengers || 1;
+        
+        // 全体の合計を計算
+        let totalBaseSum = 0;
+        let totalExpSum = 0;
+        data.legs.forEach(l => {
+            totalBaseSum += l.fare || 0;
+            totalExpSum += l.expFare || 0;
+        });
+        const combinedOne = totalBaseSum + totalExpSum;
+        const combinedAll = combinedOne * pax;
+
+        // 右上操作用ボタン
+        let actionButtonsHtml = "";
+        const finalPass = data.password || data.passwordHash || '';
+        if (!isViewOnly) {
+            actionButtonsHtml = `
+                <div class="trip-actions">
+                    <button class="btn-card-share" onclick="copyDirectShareUrl('${docId}', '${finalPass}')">🔗 リンクコピー</button>
+                    <button class="btn-edit" onclick="loadAndEditTrip('${docId}')">✏️ 編集</button>
+                </div>
+            `;
+        } else {
+            actionButtonsHtml = `
+                <div class="trip-actions">
+                    <button class="btn-card-share" style="background:#0288d1;" onclick="copyDirectShareUrl('${docId}', '${finalPass}')">🔗 共有リンクをコピー</button>
+                </div>
+            `;
+        }
+
+        // 基本枠の形成
+        card.innerHTML = `
+            ${actionButtonsHtml}
+            <div class="trip-header">
+                <div class="trip-header-left">
+                    <h3>${escapeHtml(data.title)}</h3>
+                    <span class="trip-passenger-count">${pax}名旅</span>
+                    ${combinedOne > 0 ? `<span class="total-trip-fare" title="1人: ¥${combinedOne.toLocaleString()}">総額: ¥${combinedAll.toLocaleString()}</span>` : ''}
+                </div>
+            </div>
+            <div class="trip-date">📅 日程: ${escapeHtml(data.start)}</div>
+            ${data.memo ? `<p style="font-size:0.9em; white-space:pre-wrap; background:#f9f9f9; padding:8px; border-radius:4px; margin-bottom:15px; border-left:4px solid #005bac;">${escapeHtml(data.memo)}</p>` : ''}
+            <div class="timeline" id="timeline-${docId}"></div>
+        `;
+
+        const timelineDiv = card.querySelector('#timeline-' + docId);
+        
+        // 各行程ノードの描画展開
+        data.legs.forEach((leg, index) => {
+            if (leg.type === 'spot') {
+                // スポットデザイン
+                const node = document.createElement('div');
+                node.className = 'spot-card';
+                node.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <strong>${escapeHtml(leg.spotName)}</strong>
+                        ${leg.spotTime ? `<span style="font-size:0.85em; color:#666; font-weight:bold; background:#eee; padding:1px 5px; border-radius:3px;">⏰ ${leg.spotTime}頃</span>` : ''}
+                    </div>
+                    ${leg.fare ? `<div style="margin-top:4px;"><span class="fare-badge">費用: ¥${leg.fare.toLocaleString()}</span></div>` : ''}
+                    ${leg.memo ? `<div class="trans-memo" style="margin-top:4px;">${escapeHtml(leg.memo)}</div>` : ''}
+                `;
+                timelineDiv.appendChild(node);
+            } else {
+                // 移動（駅ノード ＋ 交通ライン）
+                // 1. 出発駅ノード
+                const depNode = document.createElement('div');
+                depNode.className = 'st-node';
+                depNode.innerHTML = `
+                    <div class="st-time-box">
+                        <span class="st-time-val">${leg.depTime || '--:--'}</span>
+                    </div>
+                    <div class="st-icon"></div>
+                    <div class="st-info">
+                        <span class="st-name">${escapeHtml(leg.dep)}</span>
+                        ${leg.trackDep ? `<div class="st-track-group"><span class="st-track"><span class="st-track-text">のりば</span> ${escapeHtml(leg.trackDep)}</span></div>` : ''}
+                    </div>
+                `;
+                timelineDiv.appendChild(depNode);
+
+                // 2. 交通ライン手段ボックス
+                const transNode = document.createElement('div');
+                transNode.className = 'trans-box';
+                
+                // タイプ別色クラス分け
+                let lineClass = 'trans-line-walk';
+                let typeBadgeColorClass = 'color-walk';
+                let emoji = '🚶';
+                
+                if(leg.type === 'train') { lineClass = 'trans-line-train'; typeBadgeColorClass = 'color-train'; emoji = '🚂'; }
+                else if(leg.type === 'bus') { lineClass = 'trans-line-bus'; typeBadgeColorClass = 'color-bus'; emoji = '🚌'; }
+                else if(leg.type === 'air') { lineClass = 'trans-line-air'; typeBadgeColorClass = 'color-air'; emoji = '✈️'; }
+                else if(leg.type === 'ferry') { lineClass = 'trans-line-ferry'; typeBadgeColorClass = 'color-ferry'; emoji = '🚢'; }
+                else if(leg.type !== 'walk') { lineClass = 'trans-line-ferry'; typeBadgeColorClass = ''; emoji = '⚓'; }
+
+                // 自由設定カラーの適用チェック
+                let customStyleAttr = "";
+                if(leg.lineName) {
+                    const matchedColor = checkCustomColorMatch(leg.lineName);
+                    if(matchedColor) {
+                        typeBadgeColorClass = "custom-type-badge";
+                        customStyleAttr = `style="color: ${matchedColor} !important;"`;
+                    }
+                }
+
+                // 料金バッジテキスト組み立て
+                let fareBadgesHtml = "";
+                if(leg.fare) fareBadgesHtml += `<span class="fare-badge">運賃: ¥${leg.fare.toLocaleString()}</span>`;
+                if(leg.expFare) fareBadgesHtml += `<span class="exp-fare-badge">料金: ¥${leg.expFare.toLocaleString()}</span>`;
+
+                transNode.innerHTML = `
+                    <div class="t-line ${lineClass}"></div>
+                    <div class="trans-detail">
+                        <span class="${typeBadgeColorClass}" ${customStyleAttr}>${emoji} ${escapeHtml(leg.lineName || leg.type)}</span>
+                        ${fareBadgesHtml}
+                        ${leg.seatInfo ? `<br><span class="trans-seat-info">💺 ${escapeHtml(leg.seatInfo)}</span>` : ''}
+                        ${leg.memo ? `<div class="trans-memo">${escapeHtml(leg.memo)}</div>` : ''}
+                    </div>
+                `;
+                timelineDiv.appendChild(transNode);
+
+                // 3. 到着駅ノード
+                const arrNode = document.createElement('div');
+                arrNode.className = 'st-node';
+                arrNode.innerHTML = `
+                    <div class="st-time-box">
+                        <span class="st-time-val">${leg.arrTime || '--:--'}</span>
+                    </div>
+                    <div class="st-icon"></div>
+                    <div class="st-info">
+                        <span class="st-name">${escapeHtml(leg.arr)}</span>
+                        ${leg.trackArr ? `<div class="st-track-group"><span class="st-track"><span class="st-track-text">着のりば</span> ${escapeHtml(leg.trackArr)}</span></div>` : ''}
+                    </div>
+                `;
+                timelineDiv.appendChild(arrNode);
+            }
+        });
+
+        return card;
+    }
+
+    // ✏️ 通常編集読み込み
+    async function loadAndEditTrip(id) {
+        try {
+            const doc = await db.collection('trips').doc(id).get();
+            if(!doc.exists) return alert("データがありません");
+            const data = doc.data();
+            
+            // パスワードがあるかチェック
+            const finalPass = data.password || data.passwordHash || '';
+            if(finalPass !== "") {
+                const promptPass = prompt("🔑 このデータを編集するにはパスワードが必要です：");
+                if(!promptPass) return;
+                
+                if (data.passwordHash) {
+                    if(cyrb128Hash(promptPass) !== data.passwordHash.trim()) return alert("パスワードが違います！");
+                } else {
+                    if(promptPass !== data.password.trim()) return alert("パスワードが違います！");
+                }
+            }
+            
+            applyDataToForm(id, data);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch(e) {
+            console.error(e);
+            alert("読み込みエラーが発生しました。");
+        }
+    }
+
+    function applyDataToForm(id, data) {
+        clearForm();
+        document.getElementById('edit-id').value = id;
+        document.getElementById('trip-title').value = data.title;
+        document.getElementById('trip-memo').value = data.memo || "";
+        document.getElementById('trip-passengers').value = data.passengers || "3";
+        document.getElementById('trip-password').value = data.password || "";
+        
+        if (data.start) {
+            const parts = data.start.split('/');
+            if(parts.length === 3) {
+                document.getElementById('sy').value = parts[0];
+                document.getElementById('sm').value = parseInt(parts[1]);
+                document.getElementById('sd').value = parseInt(parts[2]);
+            }
+        }
+        
+        if (data.legs && Array.isArray(data.legs)) {
+            data.legs.forEach(l => addLeg(l));
+        }
+        
+        document.getElementById('main-form').classList.add('editing-mode');
+        document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+        updateFormTotalFare();
+    }
+
+
+    // --------------------------------------------------
+    // リンク共有・ダイレクトジャンプ機能
+    // --------------------------------------------------
+    function generateShareUrl() {
+        const editId = document.getElementById('edit-id').value;
+        if(!editId) {
+            alert("⚠️ 先に【保存（Firestoreにアップロード）】してから、生成してな！");
+            return;
+        }
+        const rawPass = document.getElementById('trip-password').value.trim();
+        let url = `${window.location.origin}${window.location.pathname}?id=${editId}`;
+        if(rawPass !== "") {
+            url += `&p=${encodeURIComponent(rawPass)}`;
+        }
+        
+        navigator.clipboard.writeText(url).then(() => {
+            alert("🔗 パスワード付きのダイレクト共有URLをクリップボードにコピーしたで！\nそのまま友達に送ってあげてな。");
+        }).catch(e => {
+            alert("コピーに失敗しました。以下のURLを手動でコピーしてな：\n" + url);
+        });
+    }
+
+    function copyDirectShareUrl(id, rawPassOrHash) {
+        let url = `${window.location.origin}${window.location.pathname}?id=${id}`;
+        if(rawPassOrHash && rawPassOrHash.trim() !== "" && rawPassOrHash.length < 32) {
+            url += `&p=${encodeURIComponent(rawPassOrHash.trim())}`;
+        }
+        navigator.clipboard.writeText(url).then(() => {
+            alert("🔗 共有URLをクリップボードにコピーしたで！");
+        }).catch(() => {
+            alert("コピーに失敗しました：\n" + url);
+        });
+    }
+
+    function importTripPrompt() {
+        const code = prompt("📥 共有元のドキュメントID（URLの ?id= 移行の英数字）を入力してな：");
+        if(code && code.trim() !== "") {
+            window.location.href = `${window.location.origin}${window.location.pathname}?id=${code.trim()}`;
+        }
+    }
+
+    // --------------------------------------------------
+    // 自由カラー設定キーワード判定ロジック
+    // --------------------------------------------------
+    function checkCustomColorMatch(lineName) {
+        if(!lineName) return null;
+        for (let i = 0; i < customColorSettings.length; i++) {
+            const set = customColorSettings[i];
+            if(set.keyword !== "" && lineName.includes(set.keyword)) {
+                return set.color;
+            }
+        }
+        return null;
+    }
+
+    function loadCustomColorSettings() {
+        const saved = localStorage.getItem('my_tetsu_custom_colors');
+        if (saved) { try { customColorSettings = JSON.parse(saved); } catch(e) {} }
+    }
+    function saveCustomColorSettings() {
+        localStorage.setItem('my_tetsu_custom_colors', JSON.stringify(customColorSettings));
+        displayLogs();
+    }
+    function renderColorSettingsList() {
+        const listDiv = document.getElementById('color-settings-list');
+        listDiv.innerHTML = '';
+        customColorSettings.forEach((set, idx) => {
+            const row = document.createElement('div');
+            row.className = 'color-setting-row';
+            row.innerHTML = `
+                <input type="text" value="${set.keyword}" style="flex:1; margin-top:0;" onchange="updateColorKeyword(${idx}, this.value)" placeholder="種別・キーワード">
+                <input type="color" value="${set.color}" onchange="updateColorHex(${idx}, this.value)">
+                <button class="btn-delete-setting" onclick="deleteColorRow(${idx})">削除</button>
+            `;
+            listDiv.appendChild(row);
+        });
+    }
+    function addCustomColorRow(keyword, color) {
+        customColorSettings.push({ keyword, color });
+        saveCustomColorSettings();
+        renderColorSettingsList();
+    }
+    function updateColorKeyword(idx, val) { customColorSettings[idx].keyword = val.trim(); saveCustomColorSettings(); }
+    function updateColorHex(idx, val) { customColorSettings[idx].color = val; saveCustomColorSettings(); }
+    function deleteColorRow(idx) {
+        customColorSettings.splice(idx, 1);
+        saveCustomColorSettings();
+        renderColorSettingsList();
+    }
+
+    // 各種トグル開閉処理
+    function toggleCalc() { document.getElementById('calc-sidebar').classList.toggle('open'); }
+    function toggleColorSidebar() { document.getElementById('color-sidebar').classList.toggle('open'); }
+    function toggleFeedback() { document.getElementById('feedback-sidebar').classList.toggle('open'); }
+    
+    // --------------------------------------------------
+    // 要望・不具合報告フィードバック送信
+    // --------------------------------------------------
+    async function sendFeedback() {
+        const name = document.getElementById('fb-name').value || "匿名";
+        const email = document.getElementById('fb-email').value || "未入力";
+        const content = document.getElementById('fb-content').value.trim();
+        if (!content) { alert("内容を入力してください。"); return; }
+
+        try {
+            await db.collection('feedbacks').add({
+                name, email, content,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert("要望・報告を送信しました。ありがとうございました！");
+            document.getElementById('fb-content').value = "";
+            toggleFeedback();
+        } catch (e) {
+            console.error(e);
+            alert("送信に失敗しました。");
+        }
+    }
+
+    // --------------------------------------------------
+    // 計算機ロジック
+    // --------------------------------------------------
+    let calcExpression = "0";
+    function pressCalc(val) {
+        const screen = document.getElementById('calc-screen');
+        if (val === 'C') {
+            calcExpression = "0";
+        } else if (val === '=') {
+            try {
+                calcExpression = eval(calcExpression).toString();
+            } catch (e) {
+                calcExpression = "Error";
+            }
+        } else {
+            if (calcExpression === "0" || calcExpression === "Error") {
+                calcExpression = val;
+            } else {
+                calcExpression += val;
+            }
+        }
+        screen.value = calcExpression;
+    }
+
+    // --------------------------------------------------
+    // エスケープ処理
+    // --------------------------------------------------
+    function escapeHtml(str) {
+        if(!str) return "";
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // --------------------------------------------------
+    // 管理システム全データ処理関連
+    // --------------------------------------------------
+    function openAdminModal() { document.getElementById('admin-modal').style.display = "flex"; }
+    function closeAdminModal() { document.getElementById('admin-modal').style.display = "none"; }
+    function checkAdminAuth() {
+        if (document.getElementById('adminUser').value === "admin" && document.getElementById('adminPass').value === "tetsu2026") {
+            document.getElementById('adminAuthArea').style.display = "none"; document.getElementById('adminDashboardArea').style.display = "block"; adminLoadLogs();
+        } else { alert("認証失敗！"); }
+    }
+    async function adminLoadLogs() {
+        const listDiv = document.getElementById('admin-logs-list');
+        listDiv.innerHTML = '読み込み中...';
+        const snapshot = await db.collection('trips').orderBy('createdAt', 'desc').get();
+        listDiv.innerHTML = '';
+        snapshot.forEach(doc => {
+            const id = doc.id;
+            const data = doc.data();
+            const item = document.createElement('div');
+            item.className = 'admin-log-item';
+            
+            const actualPass = data.password || data.passwordHash;
+            const passDisplay = actualPass ? `🔑 PW: ${actualPass}` : '🔓 パスワードなし';
+
+            item.innerHTML = `
+                <div>
+                    <strong>${escapeHtml(data.title)}</strong> [鍵:${actualPass ? '🔒' : '🔓'}]
+                    <div style="font-size: 11px; color: #666; margin-top: 2px;">${passDisplay}</div>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn-edit" onclick="adminLoadAndEdit('${id}')">編集</button>
+                    <button class="btn-delete" onclick="adminDeleteTrip('${id}', '${escapeHtml(data.title)}')">削除</button>
+                </div>
+            `;
+            listDiv.appendChild(item);
+        });
+    }
+    async function adminLoadAndEdit(id) {
+        const doc = await db.collection('trips').doc(id).get();
+        if (doc.exists) adminEditTrip(id, doc.data());
+    }
+    function adminEditTrip(id, data) {
+        closeAdminModal();
+        const s = data.start.split('/'); document.getElementById('sy').value = s[0]; document.getElementById('sm').value = s[1]; document.getElementById('sd').value = s[2];
+        document.getElementById('edit-id').value = id; document.getElementById('edit-id-input').value = id; document.getElementById('admin-id-zone').style.display = "block";
+        document.getElementById('trip-title').value = data.title; document.getElementById('trip-memo').value = data.memo || ''; document.getElementById('trip-passengers').value = data.passengers || 1;
+        const container = document.getElementById('legs-container'); container.innerHTML = ''; data.legs.forEach(leg => addLeg(leg));
+        document.getElementById('main-form').classList.add('editing-mode'); document.getElementById('btn-cancel-edit').style.display = "inline-block";
+    }
+
+    async function adminDeleteTrip(id, title) {
+        const confirmMessage = `【管理者権限】\n「${title}」の旅行記録を完全に削除します。\nこの操作は取り消せません。よろしいですか？`;
+        
+        if (confirm(confirmMessage)) {
+            try {
+                await db.collection('trips').doc(id).delete();
+                alert("旅行予定を完全に削除しました。");
+                adminLoadLogs(); // 管理画面のリストを更新
+                displayLogs();   // メイン画面の履歴リストも更新
+            } catch (e) {
+                console.error(e);
+                alert("削除に失敗しました。");
+            }
+        }
+    }
+</script>
+</body>
+</html>
