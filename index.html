@@ -76,8 +76,8 @@
         .color-air { color: #00a8e8 !important; }
         .color-ferry { color: #00838f !important; }
         
-        /* カスタム種別の装飾スタイル（背景色ではなく文字色を変えるように修正） */
-        .custom-type-badge { background-color: transparent !important; font-weight: bold; padding: 0 2px; border-radius: 0; }
+        /* カスタム種別の基本装飾スタイル */
+        .custom-type-badge { color: #ffffff !important; font-weight: bold; padding: 1px 5px; border-radius: 3px; }
         
         .spot-card { margin: 15px 0 15px -45px; background: #fffde7; border: 1px solid #f9e79f; padding: 12px 12px 12px 45px; border-radius: 8px; position: relative; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .spot-card::before { content: '📍'; position: absolute; left: 15px; top: 12px; font-size: 1.2em; z-index: 12; }
@@ -92,7 +92,7 @@
         .btn-color-toggle { background: #4caf50; color: white; }
         .btn-calc-toggle { background: #ff9800; color: white; }
         .btn-feedback-toggle { background: #00bcd4; color: white; }
-        .btn-float.btn-admin-toggle { background: #3f51b5; color: white; }
+        .btn-admin-toggle { background: #3f51b5; color: white; }
         
         .calc-sidebar { position: fixed; top: 0; right: -300px; width: 260px; height: 100%; background: #333; color: white; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.3); transition: right 0.3s ease; z-index: 2000; box-sizing: border-box; }
         .calc-sidebar.open { right: 0; }
@@ -185,14 +185,13 @@
             <label style="margin-top: 5px; color: #005bac;">管理者モード：暗号化パスワードハッシュ（編集時のみ有効）</label>
             <input type="text" id="edit-pass-input" placeholder="変更しない場合は空欄">
         </div>
-        
+
         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
             <div style="flex: 1; margin-right: 15px;">
                 <label style="margin-top: 0;">旅のタイトル</label>
                 <input type="text" id="trip-title" style="margin-top: 4px;">
                 <div style="font-size: 11px; color: #888; margin-top: 4px;">データはページの改善に利用させていただくことがあります。</div>
             </div>
-            
             <div style="width: 80px; margin-right: 15px;">
                 <label style="margin-top: 0;">人数</label>
                 <select id="trip-passengers" style="margin-top: 4px;" onchange="updateFormTotalFare()">
@@ -205,1039 +204,878 @@
             </div>
             <span id="form-total-fare" style="font-size: 0.9em; color: #e65100; font-weight: bold; margin-bottom: 12px; white-space: nowrap;"></span>
         </div>
-        
+
         <div>
             <label>旅行全体のメモ</label>
             <textarea id="trip-memo" rows="2" placeholder="旅行全体の計画や持ち物、思い出などを自由に書いてな" style="margin-top: 4px; resize: vertical;"></textarea>
         </div>
         
         <div class="flex-row">
-            <div>
-                <label>日付</label>
+            <div><label>日付</label>
                 <div class="flex-row" style="align-items: center; gap:4px;">
-                    <input type="number" id="sy" min="1" style="text-align:center; padding:8px 2px;">年
-                    <input type="number" id="sm" min="1" max="12" style="text-align:center; padding:8px 2px;">月
-                    <input type="number" id="sd" min="1" max="31" style="text-align:center; padding:8px 2px;">日
+                    <input type="number" id="sy" min="1" style="width:70px;" oninput="moveFocus(this, 'sm', 4)">年
+                    <input type="number" id="sm" min="1" max="12" style="width:50px;" oninput="moveFocus(this, 'sd', 2)">月
+                    <input type="number" id="sd" min="1" max="31" style="width:50px;">日
                 </div>
             </div>
-            <div>
-                <label>閲覧制限（任意）</label>
-                <input type="password" id="trip-password" placeholder="パスワード(半角英数)" style="margin-top: 4px;">
+            <div><label>（最終日）</label>
+                <div class="flex-row" style="align-items: center; gap:4px;">
+                    <input type="number" id="ey" min="1" style="width:70px;" oninput="moveFocus(this, 'em', 4)">年
+                    <input type="number" id="em" min="1" max="12" style="width:50px;" oninput="moveFocus(this, 'ed', 2)">月
+                    <input type="number" id="ed" min="1" max="31" style="width:50px;">日
+                </div>
             </div>
         </div>
-
-        <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h3 style="margin:0;">行程一覧 (ドラッグで移動可能)</h3>
-            </div>
-            <div id="legs-container"></div>
-            <button class="btn-add" onclick="addLeg()">＋ 行程（移動／スポット）を追加</button>
-        </div>
-        <button class="btn-save" id="btn-save-trip" onclick="saveTrip()">保存（Firestoreにアップロード）</button>
-        <button class="btn-save" id="btn-cancel-edit" style="display: none; background: #757575; margin-top: 10px;" onclick="cancelEdit()">編集をキャンセル</button>
+        
+        <div id="legs-container"></div>
+        
+        <button class="btn-add" onclick="addLeg()">＋ 行程を追加</button>
+        <button class="btn-save" id="btn-submit" onclick="saveTrip()">記録する！</button>
+        <button class="btn-add" id="btn-cancel-edit" style="display:none; background:#eee; color:#666;" onclick="location.reload()">キャンセル</button>
     </div>
-
+    <div id="logList"></div>
     <div class="share-area">
-        <button class="btn-share" onclick="generateShareUrl()">🔗 この旅の共有リンクを取得</button>
-        <button class="btn-import" onclick="importTripPrompt()">📥 共有コードから読込</button>
+        <button class="btn-share" onclick="exportAllDataText()">全データを文字でコピー（バックアップ用）</button>
+        <button class="btn-import" onclick="importDataText()">文字データから取り込む</button>
     </div>
-
-    <div id="logs-container"></div>
 </div>
 
 <div class="floating-menu">
-    <button class="btn-float btn-color-toggle" onclick="toggleColorSidebar()" title="カスタムカラー設定">🎨</button>
-    <button class="btn-float btn-calc-toggle" onclick="toggleCalc()" title="簡易計算機">🧮</button>
-    <button class="btn-float btn-feedback-toggle" onclick="toggleFeedback()" title="不具合報告・要望">💬</button>
-    <button class="btn-float btn-admin-toggle" onclick="openAdminModal()" title="全データ管理">🔑</button>
+    <!-- 種別文字とカラーを自由設定するサイドバーを開くボタン -->
+    <button class="btn-float btn-color-toggle" onclick="toggleColorSidebar()" title="種別の色を設定">🎨</button>
+    <button class="btn-float btn-calc-toggle" onclick="toggleCalc()" title="電卓を開く">🔢</button>
+    <button class="btn-float btn-feedback-toggle" onclick="toggleFeedback()" title="フィードバックを送る">💬</button>
+    <button class="btn-float btn-admin-toggle" onclick="openAdminModal()" title="管理者メニュー">🔑</button>
 </div>
 
-<div id="calc-sidebar" class="calc-sidebar">
-    <h3 style="margin-top:0;">🧮 簡易計算機</h3>
-    <input type="text" id="calc-screen" class="calc-screen" readonly value="0">
-    <div class="calc-buttons">
-        <button class="btn-c" onclick="pressCalc('7')">7</button>
-        <button class="btn-c" onclick="pressCalc('8')">8</button>
-        <button class="btn-c" onclick="pressCalc('9')">9</button>
-        <button class="btn-c op" onclick="pressCalc('/')">÷</button>
-
-        <button class="btn-c" onclick="pressCalc('4')">4</button>
-        <button class="btn-c" onclick="pressCalc('5')">5</button>
-        <button class="btn-c" onclick="pressCalc('6')">6</button>
-        <button class="btn-c op" onclick="pressCalc('*')">×</button>
-
-        <button class="btn-c" onclick="pressCalc('1')">1</button>
-        <button class="btn-c" onclick="pressCalc('2')">2</button>
-        <button class="btn-c" onclick="pressCalc('3')">3</button>
-        <button class="btn-c op" onclick="pressCalc('-')">-</button>
-
-        <button class="btn-c" onclick="pressCalc('C')">C</button>
-        <button class="btn-c" onclick="pressCalc('0')">0</button>
-        <button class="btn-c eq" onclick="pressCalc('=')">=</button>
-        <button class="btn-c op" onclick="pressCalc('+')">+</button>
+<!-- 自分でキーワードと色を何個でも設定・追加できるサイドバーパネル -->
+<div id="colorSidebar" class="color-sidebar">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin: 0; font-size:16px;">🎨 種別文字・カラー設定</h3>
+        <button onclick="toggleColorSidebar()" style="background:none; color:white; border:none; font-size:20px; cursor:pointer;">×</button>
     </div>
-    <button class="btn-c" style="width:100%; margin-top:20px; background:#555;" onclick="toggleCalc()">閉じる</button>
+    <p style="font-size:11px; color:#ccc; margin-top:0;">「列車名・種別欄」にここで入力した文字が含まれている時、指定した背景色に切り替わります。</p>
+    
+    <div id="color-settings-list"></div>
+    <button class="btn-add" style="background:#27ae60; color:white; font-size:13px; padding:6px; margin-top:5px;" onclick="addCustomColorRow('', '#005bac')">＋ 設定を追加</button>
 </div>
 
-<div id="color-sidebar" class="color-sidebar">
-    <h3 style="margin-top:0;">🎨 自由設定カラー</h3>
-    <p style="font-size:11px; color:#ccc; margin-bottom:15px;">登録したキーワードが含まれる「種別」の文字色を自動で変更します。</p>
-    <div id="color-settings-list" style="display:flex; flex-direction:column; gap:8px;"></div>
-    <button class="btn-c" style="width:100%; margin-top:15px; background:#27ae60; font-size:14px;" onclick="addCustomColorRow('新快速', '#e74c3c')">＋ 設定を追加</button>
-    <button class="btn-c" style="width:100%; margin-top:10px; background:#7f8c8d; font-size:14px;" onclick="toggleColorSidebar()">閉じる</button>
+<div id="calcSidebar" class="calc-sidebar">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin: 0;">運賃計算電卓</h3>
+        <button onclick="toggleCalc()" style="background:none; color:white; border:none; font-size:20px; cursor:pointer;">×</button>
+    </div>
+    <input type="text" id="calcScreen" class="calc-screen" readonly value="0">
+    <div class="calc-buttons">
+        <button class="btn-c" style="grid-column: span 3;" onclick="clearCalc()">C</button>
+        <button class="btn-c op" onclick="pressOp('+')">+</button>
+        <button class="btn-c" onclick="pressNum('7')">7</button><button class="btn-c" onclick="pressNum('8')">8</button><button class="btn-c" onclick="pressNum('9')">9</button><button class="btn-c op" onclick="pressOp('-')">-</button>
+        <button class="btn-c" onclick="pressNum('4')">4</button><button class="btn-c" onclick="pressNum('5')">5</button><button class="btn-c" onclick="pressNum('6')">6</button><button class="btn-c op" onclick="pressOp('*')">×</button>
+        <button class="btn-c" onclick="pressNum('1')">1</button><button class="btn-c" onclick="pressNum('2')">2</button><button class="btn-c" onclick="pressNum('3')">3</button><button class="btn-c op" onclick="pressOp('/')">÷</button>
+        <button class="btn-c" onclick="pressNum('.')">.</button><button class="btn-c" onclick="pressNum('0')">0</button><button class="btn-c eq" style="grid-column: span 2;" onclick="calculateResult()">=</button>
+    </div>
 </div>
 
-<div id="feedback-sidebar" class="feedback-sidebar">
-    <h3 style="margin-top:0;">💬 要望・不具合報告</h3>
-    <label>お名前（任意）</label>
-    <input type="text" id="fb-name" placeholder="匿名">
-    <label>メールアドレス（任意）</label>
-    <input type="text" id="fb-email" placeholder="任意">
-    <label>報告内容</label>
-    <textarea id="fb-content" class="feedback-text" placeholder="不具合や追加してほしい機能など、自由に書いてな"></textarea>
-    <button class="btn-c op" style="width:100%;" onclick="sendFeedback()">送信する</button>
-    <button class="btn-c" style="width:100%; margin-top:10px; background:#555;" onclick="toggleFeedback()">閉じる</button>
+<div id="feedbackSidebar" class="feedback-sidebar">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="margin: 0;">フィードバック</h3>
+        <button onclick="toggleFeedback()" style="background:none; color:white; border:none; font-size:20px; cursor:pointer;">×</button>
+    </div>
+    <label>お名前</label><input type="text" id="feedbackName">
+    <label>メールアドレス</label><input type="email" id="feedbackEmail">
+    <label>件名</label><input type="text" id="feedbackSubject">
+    <label>メッセージ内容</label><textarea id="feedbackText" class="feedback-text"></textarea>
+    <button class="btn-save" style="background:#00bcd4; margin-top:5px; padding:10px; font-size:15px;" onclick="sendFeedback()">送信する</button>
 </div>
 
-<div id="admin-modal" class="admin-modal">
+<div id="adminModal" class="admin-modal">
     <div class="admin-box">
         <button class="admin-close" onclick="closeAdminModal()">×</button>
-        <h3 style="margin-top:0; color:#3f51b5;">🔑 データベース全旅行一覧</h3>
-        
-        <div id="adminAuthArea" style="background:#f5f5f5; padding:15px; border-radius:8px; border:1px solid #ddd; text-align:center;">
-            <p style="margin-top:0; font-weight:bold;">管理者パスワードを入力してな！</p>
-            <input type="text" id="adminUser" placeholder="ユーザー名" style="max-width:200px; margin-bottom:10px; text-align:center;"><br>
-            <input type="password" id="adminPass" placeholder="パスワード" style="max-width:200px; margin-bottom:15px; text-align:center;"><br>
-            <button class="btn-save" style="margin-top:0; max-width:15px; padding:10px 20px; font-size:14px; width:auto; display:inline-block;" onclick="checkAdminAuth()">認証する</button>
+        <div id="adminAuthArea">
+            <h2>🔑 管理者ログイン</h2>
+            <div style="margin-bottom: 10px;"><label>ユーザーID</label><input type="text" id="adminUser"></div>
+            <div style="margin-bottom: 15px;"><label>パスワード</label><input type="password" id="adminPass"></div>
+            <button class="btn-save" style="background:#3f51b5; margin-top:0;" onclick="checkAdminAuth()">ログイン</button>
         </div>
-
-        <div id="adminDashboardArea" style="display:none; margin-top:10px;">
-            <p style="font-size:12px; color:#666;">Firestore内の全レコードです。削除や編集、公開制限パスワードの確認ができます。</p>
-            <div id="admin-logs-list" style="margin-top:15px; display:flex; flex-direction:column; gap:10px;"></div>
+        <div id="adminDashboardArea" style="display: none;">
+            <h2>🖥️ データベース管理</h2>
+            <div id="adminLogList"><p>データを読み込み中...</p></div>
         </div>
     </div>
 </div>
 
 <script>
-    // --------------------------------------------------
-    // Firebase 初期設定 (実際のキーに置き換えてな)
-    // --------------------------------------------------
-    const firebaseConfig = {
-        apiKey: "AIzaSyDE_YOUR_API_KEY_HERE",
-        authDomain: "my-tetsu-trip-log.firebaseapp.com",
-        projectId: "my-tetsu-trip-log",
-        storageBucket: "my-tetsu-trip-log.appspot.com",
-        messagingSenderId: "1234567890",
-        appId: "1:1234567890:web:abcdef123456"
-    };
-    
-    // 二重初期化を防ぐ
-    let app;
-    if (!firebase.apps.length) {
-        app = firebase.initializeApp(firebaseConfig);
-    } else {
-        app = firebase.app();
-    }
-    const db = firebase.firestore();
-
-    // --------------------------------------------------
-    // アプリ用グローバル変数
-    // --------------------------------------------------
-    let legCounter = 0;
+    // ユーザー定義の種別色をLocalStorageに保存して管理するロジック
     let customColorSettings = [
-        { keyword: "特急", color: "#e74c3c" },
-        { keyword: "新快速", color: "#2980b9" },
-        { keyword: "快速", color: "#27ae60" },
-        { keyword: "普通", color: "#7f8c8d" }
+        { keyword: '新幹線', color: '#003399' },
+        { keyword: '特急', color: '#de1c24' },
+        { keyword: 'しまかぜ', color: '#de1c24' },
+        { keyword: 'ひのとり', color: '#de1c24' },
+        { keyword: '伊勢志摩ライナー', color: '#de1c24' },
+        { keyword: '快速急行', color: '#ffaa00' },
+        { keyword: '新快速', color: '#0072bc' },
+        { keyword: '急行', color: '#e65100' },
+        { keyword: '区間快速', color: '#388e3c' },
+        { keyword: '大和路快速', color: '#388e3c' },
+        { keyword: '関空快速', color: '#388e3c' },
+        { keyword: '快速', color: '#f57c00' },
+        { keyword: '区間急行', color: '#4caf50' },
+        { keyword: '準急', color: '#2e7d32' }
     ];
 
-    // --------------------------------------------------
-    // 初期化処理（ロード時）
-    // --------------------------------------------------
-    window.addEventListener('DOMContentLoaded', async () => {
-        // 今日の日付を初期セット
-        const today = new Date();
-        document.getElementById('sy').value = today.getFullYear();
-        document.getElementById('sm').value = today.getMonth() + 1;
-        document.getElementById('sd').value = today.getDate();
-        
-        loadCustomColorSettings();
-        renderColorSettingsList();
-        updateFormTotalFare();
+    function loadCustomColorSettings() {
+        const saved = localStorage.getItem('my_tetsu_custom_colors');
+        if (saved) {
+            try { customColorSettings = JSON.parse(saved); } catch(e) {}
+        }
+        renderColorSettingsSidebar();
+    }
 
-        // 共有URLパラメータ（?id=xxx&p=yyy）のチェック
-        const params = new URLSearchParams(window.location.search);
-        const sharedId = params.get('id');
-        const passParam = params.get('p'); // URLに含まれる生パスワード
-        
-        if (sharedId) {
-            await loadSharedTrip(sharedId, passParam);
-        } else {
-            // 通常モードなら全データ一覧を表示
+    function saveCustomColorSettings() {
+        localStorage.setItem('my_tetsu_custom_colors', JSON.stringify(customColorSettings));
+        displayLogs(); // タイムラインの色設定にリアルタイムに反映
+    }
+
+    function toggleColorSidebar() {
+        document.getElementById('calcSidebar').classList.remove('open');
+        document.getElementById('feedbackSidebar').classList.remove('open');
+        document.getElementById('colorSidebar').classList.toggle('open');
+    }
+
+    function renderColorSettingsSidebar() {
+        const container = document.getElementById('color-settings-list');
+        container.innerHTML = '';
+        customColorSettings.forEach((item, index) => {
+            const row = document.createElement('div');
+            row.className = 'color-setting-row';
+            row.innerHTML = `
+                <input type="text" value="${item.keyword}" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(${index}, 'keyword', this.value)">
+                <input type="color" value="${item.color}" oninput="updateCustomColorRow(${index}, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(${index})">削</button>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function addCustomColorRow(keyword, color) {
+        customColorSettings.push({ keyword, color });
+        saveCustomColorSettings();
+        renderColorSettingsSidebar();
+    }
+
+    document.addEventListener('change', function(e) {
+        if(e.target && e.target.classList.contains('train-name')) {
             displayLogs();
         }
     });
 
-    // --------------------------------------------------
-    // 共有リンク読み込みモード
-    // --------------------------------------------------
-    let cachedSharedDocData = null; // 閲覧用パスワード確認保持
-    let cachedSharedDocId = null;
-
-    async function loadSharedTrip(id, urlPass) {
-        const appBody = document.getElementById('app-body');
-        try {
-            const doc = await db.collection('trips').doc(id).get();
-            if (!doc.exists) {
-                appBody.innerHTML = `<h1>🚃 マイ鉄旅ログ</h1><p style="text-align:center;color:red;font-weight:bold;margin-top:40px;">⚠️ 指定された旅のデータが見つかりません。</p>`;
-                return;
-            }
-            const data = doc.data();
-            
-            // パスワード制限があるか確認
-            const finalPass = data.password || data.passwordHash;
-            if (finalPass && finalPass.trim() !== "") {
-                cachedSharedDocData = data;
-                cachedSharedDocId = id;
-                
-                // URLにパスワードが含まれているなら自動自動認証
-                if (urlPass && (urlPass === (data.password || '').trim() || cyrb128Hash(urlPass) === (data.passwordHash || '').trim())) {
-                    renderSharedTripCard(id, data);
-                } else {
-                    // ロック画面を出す
-                    document.getElementById('password-lock-screen').style.display = 'flex';
-                }
-            } else {
-                // パスワードなし
-                renderSharedTripCard(id, data);
-            }
-        } catch (e) {
-            console.error(e);
-            appBody.innerHTML = `<h1>🚃 マイ鉄旅ログ</h1><p style="text-align:center;color:red;font-weight:bold;margin-top:40px;">⚠️ データの読み込みに失敗しました。</p>`;
-        }
+    function updateCustomColorRow(index, key, value) {
+        customColorSettings[index][key] = value;
+        saveCustomColorSettings();
     }
 
-    function verifySharedPassword() {
-        const input = document.getElementById('shared-password-input').value.trim();
-        const errorDiv = document.getElementById('lock-error-message');
-        if (!cachedSharedDocData) return;
-        
-        const targetPass = cachedSharedDocData.password || '';
-        const targetHash = cachedSharedDocData.passwordHash || '';
-        
-        if ((targetPass !== '' && input === targetPass.trim()) || (targetHash !== '' && cyrb128Hash(input) === targetHash.trim())) {
-            document.getElementById('password-lock-screen').style.display = 'none';
-            renderSharedTripCard(cachedSharedDocId, cachedSharedDocData);
-        } else {
-            errorDiv.innerText = "❌ パスワードが違います。もう一度入力してな！";
-        }
+    function deleteCustomColorRow(index) {
+        customColorSettings.splice(index, 1);
+        saveCustomColorSettings();
+        renderColorSettingsSidebar();
     }
 
-    function renderSharedTripCard(id, data) {
-        const appBody = document.getElementById('app-body');
-        appBody.innerHTML = `
-            <h1>🚃 マイ鉄旅ログ</h1>
-            <div style="text-align:center; margin-bottom:15px;">
-                <button class="btn-c" style="background:#005bac; font-size:14px; padding:8px 15px;" onclick="window.location.href=window.location.pathname">🏠 自分も旅の予定を作る</button>
-            </div>
-            <div id="shared-card-zone"></div>
-        `;
-        const zone = document.getElementById('shared-card-zone');
-        const card = createTripCardElement(id, data, true); // 閲覧専用モード
-        zone.appendChild(card);
-    }
-
-    // --------------------------------------------------
-    // フォームFare（運賃）の合計リアルタイム更新
-    // --------------------------------------------------
-    function updateFormTotalFare() {
-        const passengerCount = parseInt(document.getElementById('trip-passengers').value) || 1;
-        let sumBase = 0;
-        let sumExp = 0;
-        
-        const baseInputs = document.querySelectorAll('.leg-fare-input');
-        baseInputs.forEach(input => { sumBase += parseInt(input.value) || 0; });
-        
-        const expInputs = document.querySelectorAll('.leg-exp-fare-input');
-        expInputs.forEach(input => { sumExp += parseInt(input.value) || 0; });
-        
-        const totalOne = sumBase + sumExp;
-        const totalAll = totalOne * passengerCount;
-        
-        const displaySpan = document.getElementById('form-total-fare');
-        if (totalOne > 0) {
-            displaySpan.innerHTML = `1人あたり: ¥${totalOne.toLocaleString()} <span style="color:#c62828;">(合計: ¥${totalAll.toLocaleString()})</span>`;
-        } else {
-            displaySpan.innerHTML = "";
-        }
-    }
-
-    // --------------------------------------------------
-    // 行程（Leg）の動的追加
-    // --------------------------------------------------
-    function addLeg(savedData = null) {
-        legCounter++;
-        const container = document.getElementById('legs-container');
-        const div = document.createElement('div');
-        div.className = 'leg-group';
-        div.id = `leg-group-${legCounter}`;
-        div.setAttribute('draggable', 'true');
-        
-        // 保存データがある場合の初期値
-        const type = savedData ? savedData.type : 'train';
-        const isSpot = type === 'spot';
-        
-        div.innerHTML = `
-            <div class="drag-handle">☰</div>
-            <button class="btn-remove-leg" onclick="removeLeg(${legCounter})">×</button>
-            
-            <div class="entry-type-selector">
-                <label><input type="radio" name="leg_type_${legCounter}" value="train" ${type==='train'?'checked':''} onchange="switchLegType(${legCounter}, 'train')">🚂 鉄道</label>
-                <label><input type="radio" name="leg_type_${legCounter}" value="bus" ${type==='bus'?'checked':''} onchange="switchLegType(${legCounter}, 'bus')">🚌 バス</label>
-                <label><input type="radio" name="leg_type_${legCounter}" value="spot" ${isSpot?'checked':''} onchange="switchLegType(${legCounter}, 'spot')">📍 観光/宿泊</label>
-                <label><input type="radio" name="leg_type_${legCounter}" value="walk" ${type==='walk'?'checked':''} onchange="switchLegType(${legCounter}, 'walk')">🚶 徒歩</label>
-                <label><input type="radio" name="leg_type_${legCounter}" value="other" ${(!['train','bus','spot','walk'].includes(type))?'checked':''} onchange="switchLegType(${legCounter}, 'other')">⚓ その他</label>
-            </div>
-
-            <div id="other-type-zone-${legCounter}" style="display: ${(!['train','bus','spot','walk'].includes(type))?'block':'none'}; margin-bottom:10px;">
-                <label>アイコン・種別名 (例: ✈️ 飛行機, 🚢 フェリー)</label>
-                <input type="text" class="leg-custom-type" value="${savedData ? savedData.type : ''}" placeholder="✈️ 飛行機">
-            </div>
-
-            <div id="transport-fields-${legCounter}" style="display: ${isSpot ? 'none' : 'block'};">
-                <div class="flex-row">
-                    <div>
-                        <label>出発駅/場所</label>
-                        <input type="text" class="leg-dep-station" value="${savedData?.dep || ''}">
-                    </div>
-                    <div style="max-width: 90px;">
-                        <label>出発時刻</label>
-                        <input type="time" class="leg-dep-time" value="${savedData?.depTime || ''}">
-                    </div>
-                </div>
-                
-                <div class="flex-row" style="margin-top: 8px;">
-                    <div style="flex: 1.5;">
-                        <label>列車名・設備 (例: 快速 / ひのとり / 特急・個室)</label>
-                        <input type="text" class="leg-train-name" value="${savedData?.lineName || ''}">
-                    </div>
-                    <div>
-                        <label>のりば</label>
-                        <input type="text" class="leg-track-dep" placeholder="○番線" value="${savedData?.trackDep || ''}">
-                    </div>
-                </div>
-
-                <div class="flex-row" style="margin-top: 8px;">
-                    <div>
-                        <label>運賃 (1人分)</label>
-                        <input type="number" class="leg-fare-input" placeholder="¥ 0" value="${savedData?.fare || ''}" onchange="updateFormTotalFare()">
-                    </div>
-                    <div>
-                        <label>特急/指定席券 (1人分)</label>
-                        <input type="number" class="leg-exp-fare-input" placeholder="¥ 0" value="${savedData?.expFare || ''}" onchange="updateFormTotalFare()">
-                    </div>
-                </div>
-                
-                <div style="margin-top:8px;">
-                    <label>座席情報 (例: 3号車 5A / 展望車両)</label>
-                    <input type="text" class="leg-seat-info" placeholder="自由席 / 号車・座席番号など" value="${savedData?.seatInfo || ''}">
-                </div>
-
-                <div class="flex-row" style="margin-top: 8px;">
-                    <div>
-                        <label>到着駅/場所</label>
-                        <input type="text" class="leg-arr-station" value="${savedData?.arr || ''}">
-                    </div>
-                    <div style="max-width: 90px;">
-                        <label>到着時刻</label>
-                        <input type="time" class="leg-arr-time" value="${savedData?.arrTime || ''}">
-                    </div>
-                    <div style="max-width: 70px;">
-                        <label>着のりば</label>
-                        <input type="text" class="leg-track-arr" placeholder="○番線" value="${savedData?.trackArr || ''}">
-                    </div>
-                </div>
-            </div>
-
-            <div id="spot-fields-${legCounter}" style="display: ${isSpot ? 'block' : 'none'};">
-                <div class="flex-row">
-                    <div style="flex: 2;">
-                        <label>観光地・ホテル・店舗名</label>
-                        <input type="text" class="leg-spot-name" value="${savedData?.spotName || ''}">
-                    </div>
-                    <div>
-                        <label>滞在/開始時刻</label>
-                        <input type="time" class="leg-spot-time" value="${savedData?.spotTime || ''}">
-                    </div>
-                </div>
-                <div class="flex-row" style="margin-top: 8px;">
-                    <div>
-                        <label>費用・宿泊費 (1人分)</label>
-                        <input type="number" class="leg-spot-fare" placeholder="¥ 0" value="${savedData?.fare || ''}" onchange="updateFormTotalFare()">
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 8px;">
-                <label>メモ・乗換の注意など</label>
-                <textarea class="leg-memo" rows="1" placeholder="自由に入力してな" style="resize: vertical;">${savedData?.memo || ''}</textarea>
-            </div>
-        `;
-        
-        container.appendChild(div);
-        setupDragAndDropEvents(div);
-        updateFormTotalFare();
-    }
-
-    function removeLeg(id) {
-        const leg = document.getElementById(`leg-group-${id}`);
-        if(leg) {
-            leg.remove();
-            updateFormTotalFare();
-        }
-    }
-
-    function switchLegType(id, type) {
-        const transFields = document.getElementById(`transport-fields-${id}`);
-        const spotFields = document.getElementById(`spot-fields-${id}`);
-        const otherZone = document.getElementById('other-type-zone-' + id);
-        
-        // 運賃キャッシュクリア用に入力欄取得
-        const fareInput = transFields.querySelector('.leg-fare-input');
-        const expInput = transFields.querySelector('.leg-exp-fare-input');
-        const spotFareInput = spotFields.querySelector('.leg-spot-fare');
-
-        if (type === 'spot') {
-            transFields.style.display = 'none';
-            spotFields.style.display = 'block';
-            otherZone.style.display = 'none';
-            fareInput.value = '';
-            expInput.value = '';
-        } else {
-            transFields.style.display = 'block';
-            spotFields.style.display = 'none';
-            spotFareInput.value = '';
-            if (type === 'other') {
-                otherZone.style.display = 'block';
-            } else {
-                otherZone.style.display = 'none';
+    // 入力された文字に応じて動的に背景スタイルを返すように変更
+    function getCustomStyleForTrain(trainName) {
+        if (!trainName) return 'background: #1976d2;'; // デフォルト普通色
+        for (let setting of customColorSettings) {
+            if (setting.keyword && trainName.includes(setting.keyword)) {
+                return `background: ${setting.color} !important;`;
             }
         }
-        updateFormTotalFare();
+        return 'background: #1976d2;'; // 該当しない場合は通常色
     }
 
-    // --------------------------------------------------
-    // ドラッグ＆ドロップで行程を入れ替え可能にするロジック
-    // --------------------------------------------------
-    let dragSrcElement = null;
+    const firebaseConfig = {
+        apiKey: "AIzaSyAPtECMVtO4hdEbogQvSg9xL_wefTG3qsQ",
+        authDomain: "tetsu-log.firebaseapp.com",
+        projectId: "tetsu-log",
+        storageBucket: "tetsu-log.firebasestorage.app",
+        messagingSenderId: "969566531325",
+        appId: "1:969566531325:web:8174551153a96c98c45894"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    function setupDragAndDropEvents(element) {
-        element.addEventListener('dragstart', handleDragStart, false);
-        element.addEventListener('dragover', handleDragOver, false);
-        element.addEventListener('dragenter', handleDragEnter, false);
-        element.addEventListener('dragleave', handleDragLeave, false);
-        element.addEventListener('drop', handleDrop, false);
-        element.addEventListener('dragend', handleDragEnd, false);
-    }
+    let logs = [];
+    let unsubscribeTrips = null;
+    let pendingTripData = null;
+    let pendingTripId = null;
 
-    function handleDragStart(e) {
-        this.classList.add('dragging');
-        dragSrcElement = this;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', this.innerHTML);
-    }
-
-    function handleDragOver(e) {
-        if (e.preventDefault) e.preventDefault();
-        return false;
-    }
-
-    function handleDragEnter(e) {
-        this.classList.add('over');
-    }
-
-    function handleDragLeave(e) {
-        this.classList.remove('over');
-    }
-
-    function handleDrop(e) {
-        if (e.stopPropagation) e.stopPropagation();
-        
-        if (dragSrcElement !== this) {
-            // ID属性と、中身のフォーム入力状態を丸ごと物理スワップする
-            const container = document.getElementById('legs-container');
-            const children = Array.from(container.children);
-            const srcIdx = children.indexOf(dragSrcElement);
-            const targetIdx = children.indexOf(this);
-            
-            if(srcIdx < targetIdx) {
-                container.insertBefore(dragSrcElement, this.nextSibling);
-            } else {
-                container.insertBefore(dragSrcElement, this);
-            }
-        }
-        return false;
-    }
-
-    function handleDragEnd(e) {
-        this.classList.remove('dragging');
-        const legs = document.querySelectorAll('.leg-group');
-        legs.forEach(leg => leg.classList.remove('over'));
-        updateFormTotalFare(); // 並び替え後の再計算
-    }
-
-    // --------------------------------------------------
-    // 簡単なハッシュ化関数 (cyrb128)
-    // --------------------------------------------------
-    function cyrb128Hash(str) {
-        let h1 = 1779033703, h2 = 3024734711, h3 = 3362625948, h4 = 502494325;
+    function cyrb128(str) {
+        let h1 = 1779033703, h2 = 3024733165, h3 = 3362453605, h4 = 502494951;
         for (let i = 0, k; i < str.length; i++) {
             k = str.charCodeAt(i);
             h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
             h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
-            h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+            h3 = h4 ^ Math.imul(h4 ^ k, 951274213);
             h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
         }
         h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
         h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
         h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
         h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
-        return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0].map(x => x.toString(16).padStart(8,'0')).join('');
+        return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0].join('-');
     }
 
-    // --------------------------------------------------
-    // データの保存（Firestoreへ送信）
-    // --------------------------------------------------
-    async function saveTrip() {
-        const title = document.getElementById('trip-title').value.trim() || "無題の鉄旅";
-        const memo = document.getElementById('trip-memo').value.trim();
-        const passengers = parseInt(document.getElementById('trip-passengers').value) || 1;
-        const passwordInput = document.getElementById('trip-password').value.trim();
+    window.onload = async () => { 
+        loadCustomColorSettings(); // 独自色設定を読み込み
+        loadLocalLogs();
+        initDragAndDrop();
+        startRealtimeSync();
         
-        const sy = document.getElementById('sy').value;
-        const sm = document.getElementById('sm').value.padStart(2, '0');
-        const sd = document.getElementById('sd').value.padStart(2, '0');
-        const start = `${sy}/${sm}/${sd}`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const tripId = urlParams.get('trip');
         
-        const legGroups = document.querySelectorAll('#legs-container .leg-group');
-        const legs = [];
-        
-        legGroups.forEach(group => {
-            // ラジオボタンからタイプを特定
-            const radioNode = group.querySelector('.entry-type-selector input:checked');
-            let type = radioNode ? radioNode.value : 'train';
-            if (type === 'other') {
-                type = group.querySelector('.leg-custom-type').value.trim() || 'その他';
-            }
-            
-            if (type === 'spot') {
-                legs.push({
-                    type: 'spot',
-                    spotName: group.querySelector('.leg-spot-name').value,
-                    spotTime: group.querySelector('.leg-spot-time').value,
-                    fare: parseInt(group.querySelector('.leg-spot-fare').value) || 0,
-                    memo: group.querySelector('.leg-memo').value
-                });
-            } else {
-                legs.push({
-                    type: type,
-                    dep: group.querySelector('.leg-dep-station').value,
-                    depTime: group.querySelector('.leg-dep-time').value,
-                    lineName: group.querySelector('.leg-train-name').value,
-                    trackDep: group.querySelector('.leg-track-dep').value,
-                    trackArr: group.querySelector('.leg-track-arr').value,
-                    fare: parseInt(group.querySelector('.leg-fare-input').value) || 0,
-                    expFare: parseInt(group.querySelector('.leg-exp-fare-input').value) || 0,
-                    seatInfo: group.querySelector('.leg-seat-info').value,
-                    arr: group.querySelector('.leg-arr-station').value,
-                    arrTime: group.querySelector('.leg-arr-time').value,
-                    memo: group.querySelector('.leg-memo').value
-                });
-            }
-        });
-        
-        const tripData = {
-            title, memo, passengers, start, legs,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        // パスワード暗号化対応
-        if(passwordInput !== "") {
-            tripData.passwordHash = cyrb128Hash(passwordInput);
-            tripData.password = passwordInput; // 生パスワードも一応後方互換性で保持
-        } else {
-            // 空白の時は明示的に削除または空文字
-            tripData.passwordHash = "";
-            tripData.password = "";
-        }
-
-        const editId = document.getElementById('edit-id').value;
-        try {
-            if (editId) {
-                // 既存の編集
-                // 管理者モードチェック時にハッシュ値を直接上書き保存可能にするエリア
-                const adminIdInput = document.getElementById('edit-id-input').value;
-                if(adminIdInput && adminIdInput === editId) {
-                    const hashInput = document.getElementById('edit-pass-input').value.trim();
-                    if(hashInput !== "") {
-                        tripData.passwordHash = hashInput;
-                        tripData.password = hashInput;
+        if (tripId) {
+            document.getElementById('app-body').style.display = 'none';
+            try {
+                const doc = await db.collection('trips').doc(tripId).get();
+                if (doc.exists) {
+                    const tripData = doc.data();
+                    if (tripData.passwordHash) {
+                        pendingTripData = tripData;
+                        pendingTripId = tripId;
+                        document.getElementById('password-lock-screen').style.display = 'flex';
+                    } else {
+                        applyImportedTrip(tripId, tripData);
                     }
+                } else { 
+                    alert("指定された旅データが見つかりませんでした。"); 
+                    showMainApp();
                 }
-                
-                await db.collection('trips').doc(editId).set(tripData, { merge: true });
-                alert("旅行予定を更新しました！");
-            } else {
-                // 新規登録
-                tripData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                await db.collection('trips').add(tripData);
-                alert("新しい旅行予定を保存しました！");
-            }
-            
-            // フォーム初期化
-            clearForm();
-            displayLogs();
-        } catch (e) {
-            console.error(e);
-            alert("データの保存に失敗しました。");
-        }
-    }
-
-    function clearForm() {
-        document.getElementById('trip-title').value = "";
-        document.getElementById('trip-memo').value = "";
-        document.getElementById('trip-password').value = "";
-        document.getElementById('legs-container').innerHTML = "";
-        document.getElementById('trip-passengers').value = "3";
-        document.getElementById('edit-id').value = "";
-        document.getElementById('btn-cancel-edit').style.display = 'none';
-        document.getElementById('admin-id-zone').style.display = "none";
-        document.getElementById('main-form').classList.remove('editing-mode');
-        
-        legCounter = 0;
-        updateFormTotalFare();
-    }
-    
-    function cancelEdit() {
-        if(confirm("編集をキャンセルしてよろしいですか？入力内容は消去されます。")) {
-            clearForm();
-        }
-    }
-
-    // --------------------------------------------------
-    // メイン画面用のデータ一覧取得＆カード描画
-    // --------------------------------------------------
-    async function displayLogs() {
-        const container = document.getElementById('logs-container');
-        if(!container) return;
-        container.innerHTML = '<p style="text-align:center; color:#666; font-size:14px; margin-top:20px;">旅の履歴を読み込み中...</p>';
-        
-        try {
-            const snapshot = await db.collection('trips').orderBy('createdAt', 'desc').limit(25).get();
-            container.innerHTML = '<h2 style="margin-top:40px; border-bottom:2px solid #333; padding-bottom:5px;">🕒 最近作成された旅の予定</h2>';
-            
-            if (snapshot.empty) {
-                container.innerHTML += '<p style="text-align:center; color:#999; font-size:14px; padding:20px;">まだ登録されている予定はありません。最初の予定を作ってみよう！</p>';
-                return;
-            }
-            
-            snapshot.forEach(doc => {
-                const card = createTripCardElement(doc.id, doc.data(), false);
-                container.appendChild(card);
-            });
-        } catch(e) {
-            console.error(e);
-            container.innerHTML = '<p style="text-align:center; color:red; font-size:14px;">履歴の読み込みに失敗しました。</p>';
-        }
-    }
-
-    // --------------------------------------------------
-    // 旅行タイムラインカードのHTML要素生成（超重要）
-    // --------------------------------------------------
-    function createTripCardElement(docId, data, isViewOnly = false) {
-        const card = document.createElement('div');
-        card.className = 'trip-card';
-        
-        // 人数取得
-        const pax = data.passengers || 1;
-        
-        // 全体の合計を計算
-        let totalBaseSum = 0;
-        let totalExpSum = 0;
-        data.legs.forEach(l => {
-            totalBaseSum += l.fare || 0;
-            totalExpSum += l.expFare || 0;
-        });
-        const combinedOne = totalBaseSum + totalExpSum;
-        const combinedAll = combinedOne * pax;
-
-        // 右上操作用ボタン
-        let actionButtonsHtml = "";
-        const finalPass = data.password || data.passwordHash || '';
-        if (!isViewOnly) {
-            actionButtonsHtml = `
-                <div class="trip-actions">
-                    <button class="btn-card-share" onclick="copyDirectShareUrl('${docId}', '${finalPass}')">🔗 リンクコピー</button>
-                    <button class="btn-edit" onclick="loadAndEditTrip('${docId}')">✏️ 編集</button>
-                </div>
-            `;
-        } else {
-            actionButtonsHtml = `
-                <div class="trip-actions">
-                    <button class="btn-card-share" style="background:#0288d1;" onclick="copyDirectShareUrl('${docId}', '${finalPass}')">🔗 共有リンクをコピー</button>
-                </div>
-            `;
-        }
-
-        // 基本枠の形成
-        card.innerHTML = `
-            ${actionButtonsHtml}
-            <div class="trip-header">
-                <div class="trip-header-left">
-                    <h3>${escapeHtml(data.title)}</h3>
-                    <span class="trip-passenger-count">${pax}名旅</span>
-                    ${combinedOne > 0 ? `<span class="total-trip-fare" title="1人: ¥${combinedOne.toLocaleString()}">総額: ¥${combinedAll.toLocaleString()}</span>` : ''}
-                </div>
-            </div>
-            <div class="trip-date">📅 日程: ${escapeHtml(data.start)}</div>
-            ${data.memo ? `<p style="font-size:0.9em; white-space:pre-wrap; background:#f9f9f9; padding:8px; border-radius:4px; margin-bottom:15px; border-left:4px solid #005bac;">${escapeHtml(data.memo)}</p>` : ''}
-            <div class="timeline" id="timeline-${docId}"></div>
-        `;
-
-        const timelineDiv = card.querySelector('#timeline-' + docId);
-        
-        // 各行程ノードの描画展開
-        data.legs.forEach((leg, index) => {
-            if (leg.type === 'spot') {
-                // スポットデザイン
-                const node = document.createElement('div');
-                node.className = 'spot-card';
-                node.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <strong>${escapeHtml(leg.spotName)}</strong>
-                        ${leg.spotTime ? `<span style="font-size:0.85em; color:#666; font-weight:bold; background:#eee; padding:1px 5px; border-radius:3px;">⏰ ${leg.spotTime}頃</span>` : ''}
-                    </div>
-                    ${leg.fare ? `<div style="margin-top:4px;"><span class="fare-badge">費用: ¥${leg.fare.toLocaleString()}</span></div>` : ''}
-                    ${leg.memo ? `<div class="trans-memo" style="margin-top:4px;">${escapeHtml(leg.memo)}</div>` : ''}
-                `;
-                timelineDiv.appendChild(node);
-            } else {
-                // 移動（駅ノード ＋ 交通ライン）
-                // 1. 出発駅ノード
-                const depNode = document.createElement('div');
-                depNode.className = 'st-node';
-                depNode.innerHTML = `
-                    <div class="st-time-box">
-                        <span class="st-time-val">${leg.depTime || '--:--'}</span>
-                    </div>
-                    <div class="st-icon"></div>
-                    <div class="st-info">
-                        <span class="st-name">${escapeHtml(leg.dep)}</span>
-                        ${leg.trackDep ? `<div class="st-track-group"><span class="st-track"><span class="st-track-text">のりば</span> ${escapeHtml(leg.trackDep)}</span></div>` : ''}
-                    </div>
-                `;
-                timelineDiv.appendChild(depNode);
-
-                // 2. 交通ライン手段ボックス
-                const transNode = document.createElement('div');
-                transNode.className = 'trans-box';
-                
-                // タイプ別色クラス分け
-                let lineClass = 'trans-line-walk';
-                let typeBadgeColorClass = 'color-walk';
-                let emoji = '🚶';
-                
-                if(leg.type === 'train') { lineClass = 'trans-line-train'; typeBadgeColorClass = 'color-train'; emoji = '🚂'; }
-                else if(leg.type === 'bus') { lineClass = 'trans-line-bus'; typeBadgeColorClass = 'color-bus'; emoji = '🚌'; }
-                else if(leg.type === 'air') { lineClass = 'trans-line-air'; typeBadgeColorClass = 'color-air'; emoji = '✈️'; }
-                else if(leg.type === 'ferry') { lineClass = 'trans-line-ferry'; typeBadgeColorClass = 'color-ferry'; emoji = '🚢'; }
-                else if(leg.type !== 'walk') { lineClass = 'trans-line-ferry'; typeBadgeColorClass = ''; emoji = '⚓'; }
-
-                // 自由設定カラーの適用チェック
-                let customStyleAttr = "";
-                if(leg.lineName) {
-                    const matchedColor = checkCustomColorMatch(leg.lineName);
-                    if(matchedColor) {
-                        typeBadgeColorClass = "custom-type-badge";
-                        customStyleAttr = `style="color: ${matchedColor} !important;"`;
-                    }
-                }
-
-                // 料金バッジテキスト組み立て
-                let fareBadgesHtml = "";
-                if(leg.fare) fareBadgesHtml += `<span class="fare-badge">運賃: ¥${leg.fare.toLocaleString()}</span>`;
-                if(leg.expFare) fareBadgesHtml += `<span class="exp-fare-badge">料金: ¥${leg.expFare.toLocaleString()}</span>`;
-
-                transNode.innerHTML = `
-                    <div class="t-line ${lineClass}"></div>
-                    <div class="trans-detail">
-                        <span class="${typeBadgeColorClass}" ${customStyleAttr}>${emoji} ${escapeHtml(leg.lineName || leg.type)}</span>
-                        ${fareBadgesHtml}
-                        ${leg.seatInfo ? `<br><span class="trans-seat-info">💺 ${escapeHtml(leg.seatInfo)}</span>` : ''}
-                        ${leg.memo ? `<div class="trans-memo">${escapeHtml(leg.memo)}</div>` : ''}
-                    </div>
-                `;
-                timelineDiv.appendChild(transNode);
-
-                // 3. 到着駅ノード
-                const arrNode = document.createElement('div');
-                arrNode.className = 'st-node';
-                arrNode.innerHTML = `
-                    <div class="st-time-box">
-                        <span class="st-time-val">${leg.arrTime || '--:--'}</span>
-                    </div>
-                    <div class="st-icon"></div>
-                    <div class="st-info">
-                        <span class="st-name">${escapeHtml(leg.arr)}</span>
-                        ${leg.trackArr ? `<div class="st-track-group"><span class="st-track"><span class="st-track-text">着のりば</span> ${escapeHtml(leg.trackArr)}</span></div>` : ''}
-                    </div>
-                `;
-                timelineDiv.appendChild(arrNode);
-            }
-        });
-
-        return card;
-    }
-
-    // ✏️ 通常編集読み込み
-    async function loadAndEditTrip(id) {
-        try {
-            const doc = await db.collection('trips').doc(id).get();
-            if(!doc.exists) return alert("データがありません");
-            const data = doc.data();
-            
-            // パスワードがあるかチェック
-            const finalPass = data.password || data.passwordHash || '';
-            if(finalPass !== "") {
-                const promptPass = prompt("🔑 このデータを編集するにはパスワードが必要です：");
-                if(!promptPass) return;
-                
-                if (data.passwordHash) {
-                    if(cyrb128Hash(promptPass) !== data.passwordHash.trim()) return alert("パスワードが違います！");
-                } else {
-                    if(promptPass !== data.password.trim()) return alert("パスワードが違います！");
-                }
-            }
-            
-            applyDataToForm(id, data);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch(e) {
-            console.error(e);
-            alert("読み込みエラーが発生しました。");
-        }
-    }
-
-    function applyDataToForm(id, data) {
-        clearForm();
-        document.getElementById('edit-id').value = id;
-        document.getElementById('trip-title').value = data.title;
-        document.getElementById('trip-memo').value = data.memo || "";
-        document.getElementById('trip-passengers').value = data.passengers || "3";
-        document.getElementById('trip-password').value = data.password || "";
-        
-        if (data.start) {
-            const parts = data.start.split('/');
-            if(parts.length === 3) {
-                document.getElementById('sy').value = parts[0];
-                document.getElementById('sm').value = parseInt(parts[1]);
-                document.getElementById('sd').value = parseInt(parts[2]);
+            } catch (e) { 
+                console.error("データ読み込みエラー:", e); 
+                showMainApp();
             }
         }
-        
-        if (data.legs && Array.isArray(data.legs)) {
-            data.legs.forEach(l => addLeg(l));
-        }
-        
-        document.getElementById('main-form').classList.add('editing-mode');
-        document.getElementById('btn-cancel-edit').style.display = 'inline-block';
-        updateFormTotalFare();
-    }
+    };
 
-
-    // --------------------------------------------------
-    // リンク共有・ダイレクトジャンプ機能
-    // --------------------------------------------------
-    function generateShareUrl() {
-        const editId = document.getElementById('edit-id').value;
-        if(!editId) {
-            alert("⚠️ 先に【保存（Firestoreにアップロード）】してから、生成してな！");
+    function verifySharedPassword() {
+        const userInput = document.getElementById('shared-password-input').value.trim();
+        const errorDiv = document.getElementById('lock-error-message');
+        if (!userInput) {
+            errorDiv.innerText = "パスワードを入力してな！";
             return;
         }
-        const rawPass = document.getElementById('trip-password').value.trim();
-        let url = `${window.location.origin}${window.location.pathname}?id=${editId}`;
-        if(rawPass !== "") {
-            url += `&p=${encodeURIComponent(rawPass)}`;
+        const userHash = cyrb128(userInput);
+        if (userHash === pendingTripData.passwordHash) {
+            document.getElementById('password-lock-screen').style.display = 'none';
+            applyImportedTrip(pendingTripId, pendingTripData);
+        } else {
+            errorDiv.innerText = "❌ パスワードが違います。もう一度入力してな。";
         }
+    }
+
+    function applyImportedTrip(tripId, tripData) {
+        document.getElementById('trip-title').value = tripData.title;
+        document.getElementById('trip-passengers').value = tripData.passengers || 1;
+        document.getElementById('trip-memo').value = tripData.memo || '';
+        if (tripData.start) {
+            const s = tripData.start.split('/');
+            document.getElementById('sy').value = s[0] || '';
+            document.getElementById('sm').value = s[1] || '';
+            document.getElementById('sd').value = s[2] || '';
+        }
+        if (tripData.end) {
+            const e = tripData.end.split('/');
+            document.getElementById('ey').value = e[0] || '';
+            document.getElementById('em').value = e[1] || '';
+            document.getElementById('ed').value = e[2] || '';
+        }
+        const container = document.getElementById('legs-container');
+        container.innerHTML = '';
+        tripData.legs.forEach(leg => addLeg(leg));
         
-        navigator.clipboard.writeText(url).then(() => {
-            alert("🔗 パスワード付きのダイレクト共有URLをクリップボードにコピーしたで！\nそのまま友達に送ってあげてな。");
-        }).catch(e => {
-            alert("コピーに失敗しました。以下のURLを手動でコピーしてな：\n" + url);
+        const importedTrip = {
+            id: 'trip_' + Date.now(),
+            firebaseId: tripId,
+            title: tripData.title,
+            memo: tripData.memo || '',
+            start: tripData.start,
+            end: tripData.end || '',
+            passengers: tripData.passengers || 1,
+            legs: tripData.legs
+        };
+        
+        const existIdx = logs.findIndex(log => log.firebaseId === tripId);
+        if (existIdx !== -1) {
+            logs[existIdx] = importedTrip;
+        } else {
+            logs.unshift(importedTrip);
+        }
+        saveLocalLogs();
+        alert(`「${tripData.title}」のプランを開いて、専用リストに保存したで！`);
+        showMainApp();
+    }
+
+    function showMainApp() {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        document.getElementById('app-body').style.display = 'block';
+    }
+
+    function startRealtimeSync() {
+        if (unsubscribeTrips) unsubscribeTrips();
+        unsubscribeTrips = db.collection('trips').onSnapshot((snapshot) => {
+            let updatedAny = false;
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "modified") {
+                    const firebaseId = change.doc.id;
+                    const updatedData = change.doc.data();
+                    const localIdx = logs.findIndex(log => log.firebaseId === firebaseId || log.id === firebaseId);
+                    if (localIdx !== -1) {
+                        logs[localIdx].title = updatedData.title;
+                        logs[localIdx].memo = updatedData.memo || '';
+                        logs[localIdx].start = updatedData.start;
+                        logs[localIdx].end = updatedData.end;
+                        logs[localIdx].passengers = updatedData.passengers || 1;
+                        logs[localIdx].legs = updatedData.legs;
+                        updatedAny = true;
+                    }
+                } else if (change.type === "removed") {
+                    const firebaseId = change.doc.id;
+                    const localIdx = logs.findIndex(log => log.firebaseId === firebaseId);
+                    if (localIdx !== -1) {
+                        delete logs[localIdx].firebaseId;
+                        updatedAny = true;
+                    }
+                }
+            });
+            if (updatedAny) {
+                localStorage.setItem('my_tetsu_logs', JSON.stringify(logs));
+                displayLogs();
+                updateFormTotalFare();
+            }
         });
     }
 
-    function copyDirectShareUrl(id, rawPassOrHash) {
-        let url = `${window.location.origin}${window.location.pathname}?id=${id}`;
-        if(rawPassOrHash && rawPassOrHash.trim() !== "" && rawPassOrHash.length < 32) {
-            url += `&p=${encodeURIComponent(rawPassOrHash.trim())}`;
-        }
-        navigator.clipboard.writeText(url).then(() => {
-            alert("🔗 共有URLをクリップボードにコピーしたで！");
-        }).catch(() => {
-            alert("コピーに失敗しました：\n" + url);
+    function loadLocalLogs() {
+        const localData = localStorage.getItem('my_tetsu_logs');
+        if (localData) { try { logs = JSON.parse(localData); } catch(e) { logs = []; } } else { logs = []; }
+        displayLogs(); updateFormTotalFare();
+    }
+
+    function saveLocalLogs() {
+        localStorage.setItem('my_tetsu_logs', JSON.stringify(logs));
+        displayLogs(); updateFormTotalFare();
+    }
+
+    function moveFocus(current, nextId, max) { if (current.value.length >= max) document.getElementById(nextId).focus(); }
+    
+    function updateFormTotalFare() {
+        let singleTotal = 0; 
+        document.querySelectorAll('.leg-group').forEach(g => {
+            const fareInput = g.querySelector('.leg-fare');
+            const expFareInput = g.querySelector('.leg-exp-fare');
+            if (fareInput && g.querySelector('.spot-ui').style.display !== 'block') {
+                const f = parseInt(fareInput.value);
+                if (!isNaN(f)) singleTotal += f;
+            }
+            if (expFareInput && g.querySelector('.exp-fare-field').style.display !== 'none') {
+                const ef = parseInt(expFareInput.value);
+                if (!isNaN(ef)) singleTotal += ef;
+            }
+            if (g.querySelector('.spot-ui').style.display === 'block') {
+                const sf = parseInt(g.querySelector('.spot-ui .leg-fare').value);
+                if (!isNaN(sf)) singleTotal += sf;
+            }
         });
-    }
-
-    function importTripPrompt() {
-        const code = prompt("📥 共有元のドキュメントID（URLの ?id= 移行の英数字）を入力してな：");
-        if(code && code.trim() !== "") {
-            window.location.href = `${window.location.origin}${window.location.pathname}?id=${code.trim()}`;
+        const passengers = parseInt(document.getElementById('trip-passengers').value) || 1; 
+        const groupTotal = singleTotal * passengers;
+        const fareEl = document.getElementById('form-total-fare'); 
+        if (groupTotal > 0) { 
+            fareEl.innerText = `1人分: ¥${singleTotal.toLocaleString()} | 全員分: ¥${groupTotal.toLocaleString()}`; 
+        } else { 
+            fareEl.innerText = ''; 
         }
     }
 
-    // --------------------------------------------------
-    // 自由カラー設定キーワード判定ロジック
-    // --------------------------------------------------
-    function checkCustomColorMatch(lineName) {
-        if(!lineName) return null;
-        for (let i = 0; i < customColorSettings.length; i++) {
-            const set = customColorSettings[i];
-            if(set.keyword !== "" && lineName.includes(set.keyword)) {
-                return set.color;
+    function addLeg(data = null) {
+        const container = document.getElementById('legs-container'); const count = Date.now() + Math.random(); const div = document.createElement('div'); div.className = 'leg-group';
+        div.setAttribute('draggable', 'true');
+        
+        let oldTrainType = data?.trainType || 'local';
+        let selectVal = oldTrainType === 'express' ? 'express' : 'local';
+
+        div.innerHTML = `
+            <div class="drag-handle">☰</div>
+            <button class="btn-remove-leg" onclick="this.parentElement.remove(); updateFormTotalFare();">×</button>
+            <div class="entry-type-selector">
+                <label><input type="radio" name="etype-${count}" value="move" ${!data || data.eType === 'move' ? 'checked' : ''} onchange="toggleLegUI(this)"><span>🏃 移動</span></label>
+                <label><input type="radio" name="etype-${count}" value="spot" ${data && data.eType === 'spot' ? 'checked' : ''} onchange="toggleLegUI(this)"><span>📍 スポット</span></label>
+            </div>
+            <div class="move-ui" style="display: ${!data || data.eType === 'move' ? 'block' : 'none'}">
+                <div class="flex-row">
+                    <div>
+                        <label>手段</label>
+                        <select class="transport-type" onchange="toggleTransportFields(this)">
+                            <option value="train" ${data?.transport==='train'?'selected':''}>鉄道</option>
+                            <option value="bus" ${data?.transport==='bus'?'selected':''}>バス</option>
+                            <option value="air" ${data?.transport==='air'?'selected':''}>飛行機</option>
+                            <option value="ferry" ${data?.transport==='ferry'?'selected':''}>フェリー</option>
+                            <option value="walk" ${data?.transport==='walk'?'selected':''}>徒歩</option>
+                        </select>
+                    </div>
+                    <div class="train-type-field">
+                        <label class="train-type-label">予約</label>
+                        <select class="train-type" onchange="toggleTransportFields(this)">
+                            <option value="local" ${selectVal==='local'?'selected':''}>不要</option>
+                            <option value="express" ${selectVal==='express'?'selected':''}>必要</option>
+                        </select>
+                    </div>
+                    <div class="line-field">
+                        <label class="line-label">路線名</label>
+                        <input type="text" class="line-name" value="${data?.line || ''}">
+                    </div>
+                    <div class="fare-field" style="max-width: 110px;">
+                        <label>乗車券(1人)</label>
+                        <input type="number" class="leg-fare" min="0" style="text-align: right;" value="${data?.fare || ''}" oninput="updateFormTotalFare()">
+                    </div>
+                    <div class="exp-fare-field" style="max-width: 110px;">
+                        <label>特急券等(1人)</label>
+                        <input type="number" class="leg-exp-fare" min="0" style="text-align: right;" value="${data?.expFare || ''}" oninput="updateFormTotalFare()">
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div><label class="dep-label">乗車駅</label><input type="text" class="dep-station" value="${data?.depS || ''}"></div>
+                    <div class="track-field"><label class="dep-track-label">発のりば</label><input type="text" class="dep-track" value="${data?.depTrk || ''}"></div>
+                    <div><label>発車時刻</label><input type="time" class="dep-time" value="${data?.depT || ''}"></div>
+                </div>
+                <div class="flex-row">
+                    <div class="train-field"><label class="train-label">列車名・種別・便名</label><input type="text" class="train-name" value="${data?.train || ''}"></div>
+                    <div class="direct-field"><label class="direct-label">直通・経由</label><input type="text" class="direct-name" value="${data?.direct || ''}"></div>
+                    <div class="seat-field car-field" style="max-width: 80px;"><label>号車</label><input type="text" class="leg-car-num" value="${data?.carNum || ''}"></div>
+                    <div class="seat-field seat-num-field"><label>座席番号</label><input type="text" class="leg-seat-num" value="${data?.seatNum || ''}"></div>
+                </div>
+                <div class="flex-row">
+                    <div><label class="arr-label">降車駅</label><input type="text" class="arr-station" value="${data?.arrS || ''}"></div>
+                    <div class="track-field-arr"><label class="arr-track-label">着のりば</label><input type="text" class="arr-track" value="${data?.arrTrk || ''}"></div>
+                    <div><label>到着時刻</label><input type="time" class="arr-time" value="${data?.arrT || ''}"></div>
+                </div>
+                <label class="memo-label">メモ</label>
+                <textarea class="leg-memo-input" rows="2">${data?.memo || ''}</textarea>
+            </div>
+            <div class="spot-ui" style="display: ${data && data.eType === 'spot' ? 'block' : 'none'}">
+                <div class="flex-row">
+                    <div><label>スポット名</label><input type="text" class="spot-name-input" value="${data?.name || ''}"></div>
+                    <div style="max-width: 120px;">
+                        <label>予約</label>
+                        <select class="train-type">
+                            <option value="local" ${selectVal==='local'?'selected':''}>不要</option>
+                            <option value="express" ${selectVal==='express'?'selected':''}>必要</option>
+                        </select>
+                    </div>
+                    <div style="max-width: 120px;">
+                        <label>費用(1人分)</label>
+                        <input type="number" class="leg-fare" min="0" style="text-align: right;" value="${data?.fare || ''}" oninput="updateFormTotalFare()">
+                    </div>
+                </div>
+                <label>メモ</label>
+                <textarea class="spot-memo-input" rows="2">${data?.memo || ''}</textarea>
+            </div>`;
+        
+        container.appendChild(div);
+        toggleTransportFields(div.querySelector('.transport-type'));
+        bindDragEvents(div);
+        updateFormTotalFare();
+    }
+
+    function initDragAndDrop() {
+        const container = document.getElementById('legs-container');
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const draggingItem = container.querySelector('.dragging');
+            if(!draggingItem) return;
+            const siblings = [...container.querySelectorAll('.leg-group:not(.dragging)')];
+            let nextSibling = siblings.find(sibling => {
+                return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2;
+            });
+            container.insertBefore(draggingItem, nextSibling);
+        });
+        container.addEventListener('dragend', () => { updateFormTotalFare(); });
+    }
+
+    function bindDragEvents(el) {
+        el.addEventListener('dragstart', (e) => {
+            el.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        el.addEventListener('dragend', () => { el.classList.remove('dragging'); });
+    }
+
+    function toggleLegUI(radio) {
+        const group = radio.closest('.leg-group');
+        if (radio.value === 'move') {
+            group.querySelector('.move-ui').style.display = 'block';
+            group.querySelector('.spot-ui').style.display = 'none';
+        } else {
+            group.querySelector('.move-ui').style.display = 'none';
+            group.querySelector('.spot-ui').style.display = 'block';
+        }
+        updateFormTotalFare();
+    }
+
+    function toggleTransportFields(select) {
+        const group = select.closest('.leg-group');
+        const type = group.querySelector('.transport-type').value;
+        const isExpress = group.querySelector('.train-type').value === 'express';
+
+        const tf = group.querySelector('.train-field');
+        const df = group.querySelector('.direct-field');
+        const lf = group.querySelector('.line-field');
+        const ttf = group.querySelector('.train-type-field');
+        const ff = group.querySelector('.fare-field');
+        const eff = group.querySelector('.exp-fare-field');
+        
+        const depL = group.querySelector('.dep-label');
+        const arrL = group.querySelector('.arr-label');
+        const lineL = group.querySelector('.line-label');
+        const trainL = group.querySelector('.train-label');
+        const directL = group.querySelector('.direct-label');
+        const trkF = group.querySelector('.track-field');
+        const trkFA = group.querySelector('.track-field-arr');
+
+        const seatFields = group.querySelectorAll('.seat-field');
+
+        tf.style.display = 'block'; df.style.display = 'block'; lf.style.display = 'block'; ttf.style.display = 'block'; ff.style.display = 'block'; eff.style.display = 'none';
+        depL.innerText = "乗車駅"; arrL.innerText = "降車駅"; lineL.innerText = "路線名"; trainL.innerText = "列車名・種別・便名"; directL.innerText = "直通・経由";
+        trkF.style.display = 'block'; trkFA.style.display = 'block';
+        seatFields.forEach(f => f.style.display = 'none');
+
+        if (type === 'train') {
+            if (isExpress) { eff.style.display = 'block'; seatFields.forEach(f => f.style.display = 'block'); }
+        } else if (type === 'bus') {
+            lineL.innerText = "バス会社・路線名"; trainL.innerText = "系統・便名";
+            if (isExpress) { eff.style.display = 'block'; seatFields.forEach(f => f.style.display = 'block'); }
+        } else if (type === 'air') {
+            ttf.style.display = 'none'; lineL.innerText = "航空会社"; trainL.innerText = "便名"; directL.innerText = "アライアンス等";
+            depL.innerText = "出発空港"; arrL.innerText = "到着空港"; eff.style.display = 'block'; seatFields.forEach(f => f.style.display = 'block');
+        } else if (type === 'ferry') {
+            ttf.style.display = 'none'; lineL.innerText = "航路・会社名"; trainL.innerText = "船名"; directL.innerText = "等級・運航便";
+            depL.innerText = "乗船港"; arrL.innerText = "下船港"; eff.style.display = 'block'; seatFields.forEach(f => f.style.display = 'block');
+        } else if (type === 'walk') {
+            ttf.style.display = 'none'; tf.style.display = 'none'; df.style.display = 'none'; lf.style.display = 'none'; ff.style.display = 'none';
+            depL.innerText = "出発地"; arrL.innerText = "目的地"; trkF.style.display = 'none'; trkFA.style.display = 'none';
+        }
+        updateFormTotalFare();
+    }
+
+    function toggleCheckboxState(tripId, legIndex, isChecked) {
+        const trip = logs.find(log => log.id === tripId || log.firebaseId === tripId);
+        if (trip && trip.legs[legIndex]) {
+            trip.legs[legIndex].checked = isChecked;
+            saveLocalLogs();
+            if (trip.firebaseId) {
+                db.collection('trips').doc(trip.firebaseId).update({ legs: trip.legs });
             }
         }
-        return null;
     }
 
-    function loadCustomColorSettings() {
-        const saved = localStorage.getItem('my_tetsu_custom_colors');
-        if (saved) { try { customColorSettings = JSON.parse(saved); } catch(e) {} }
-    }
-    function saveCustomColorSettings() {
-        localStorage.setItem('my_tetsu_custom_colors', JSON.stringify(customColorSettings));
-        displayLogs();
-    }
-    function renderColorSettingsList() {
-        const listDiv = document.getElementById('color-settings-list');
-        listDiv.innerHTML = '';
-        customColorSettings.forEach((set, idx) => {
-            const row = document.createElement('div');
-            row.className = 'color-setting-row';
-            row.innerHTML = `
-                <input type="text" value="${set.keyword}" style="flex:1; margin-top:0;" onchange="updateColorKeyword(${idx}, this.value)" placeholder="種別・キーワード">
-                <input type="color" value="${set.color}" onchange="updateColorHex(${idx}, this.value)">
-                <button class="btn-delete-setting" onclick="deleteColorRow(${idx})">削除</button>
-            `;
-            listDiv.appendChild(row);
+    function displayLogs() {
+        const list = document.getElementById('logList'); list.innerHTML = "";
+        logs.forEach((trip) => {
+            let singleTotalFare = 0; const passengers = trip.passengers || 1; 
+            trip.legs.forEach(leg => { 
+                if (leg.fare) { const f = parseInt(leg.fare); if (!isNaN(f)) singleTotalFare += f; } 
+                if (leg.expFare && ((leg.transport !== 'train' && leg.transport !== 'bus') || leg.trainType === 'express')) { const ef = parseInt(leg.expFare); if (!isNaN(ef)) singleTotalFare += ef; }
+            });
+            const groupTotalFare = singleTotalFare * passengers; const totalFareBadge = groupTotalFare > 0 ? `<span class="total-trip-fare">1人: ¥${singleTotalFare.toLocaleString()} / 全員: ¥${groupTotalFare.toLocaleString()}</span>` : ''; const passengerBadge = `<span class="trip-passenger-count">${passengers}名</span>`;
+            let displayId = trip.firebaseId ? trip.firebaseId.toString() : '';
+            let shareBtnText = displayId ? `共有リンク作成 (同期中)` : "共有リンク作成";
+            let shareBtnHtml = `<button class="btn-card-share" onclick="shareTripToFirebase('${trip.id}')">${shareBtnText}</button>`;
+
+            let h = `<div class="trip-card"><div class="trip-actions">${shareBtnHtml}<button class="btn-edit" onclick="editTrip('${trip.id}')">編集</button><button class="btn-delete" onclick="deleteTrip('${trip.id}')">削除</button></div><div class="trip-header"><div class="trip-header-left"><h3>${trip.title}</h3>${passengerBadge}${totalFareBadge}</div></div><div class="trip-date">${trip.start}${trip.end ? ' ～ ' + trip.end : ''}</div>`;
+
+            if (trip.memo) {
+                h += `<div style="background: #f1f8ff; border-left: 4px solid #005bac; padding: 10px 12px; font-size: 0.9em; color: #444; margin: -10px 0 15px 0; border-radius: 0 4px 4px 0; white-space: pre-wrap;">📝 <b>旅行全体のメモ:</b>\n${trip.memo}</div>`;
+            }
+
+            let reservationHtml = ""; let hasReservation = false;
+            trip.legs.forEach((leg, legIdx) => {
+                const isCheckedAttr = leg.checked ? "checked" : "";
+                if (leg.eType === 'move' && leg.trainType === 'express' && (leg.transport === 'train' || leg.transport === 'bus')) {
+                    hasReservation = true; let seatDetail = "";
+                    if (leg.carNum) seatDetail += ` ${leg.carNum}号車`;
+                    if (leg.seatNum) seatDetail += ` ${leg.seatNum}`;
+                    let titleText = leg.train ? leg.train : leg.line;
+                    let sectionText = (leg.depS && leg.arrS) ? `（${leg.depS}${leg.depT ? ' ' + leg.depT + '発' : ''} → ${leg.arrS}${leg.arrT ? ' ' + leg.arrT + '着' : ''}）` : "";
+                    
+                    // チェックリスト側も独自設定色を反映
+                    let inlineStyle = getCustomStyleForTrain(leg.train);
+                    reservationHtml += `<div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 0.95em;"><input type="checkbox" style="width: auto; margin-top: 4px; cursor: pointer;" ${isCheckedAttr} onchange="toggleCheckboxState('${trip.id}', ${legIdx}, this.checked)"><div><strong class="custom-type-badge" style="${inlineStyle}">${titleText}</strong>${sectionText}<br><span style="color: #555; font-size: 0.9em; margin-left: 2px;">💺 ${seatDetail.trim() || '座席指定なし'}</span></div></div>`;
+                } else if (leg.eType === 'spot' && leg.trainType === 'express') {
+                    hasReservation = true;
+                    reservationHtml += `<div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 0.95em;"><input type="checkbox" style="width: auto; margin-top: 4px; cursor: pointer;" ${isCheckedAttr} onchange="toggleCheckboxState('${trip.id}', ${legIdx}, this.checked)"><div><strong style="color: #e65100;">📍 ${leg.name}</strong>（スポット予約）</div></div>`;
+                }
+            });
+
+            if (hasReservation) {
+                h += `<div style="background: #fffdf0; border: 1px solid #f9e79f; padding: 12px 15px; border-radius: 8px; margin: 10px 0 15px 0;"><b>🎫 指定席・予約チェックリスト</b><div style="margin-top:8px;">${reservationHtml}</div></div>`;
+            }
+
+            h += `<div class="timeline">`;
+            let items = [];
+            trip.legs.forEach((leg) => {
+                if (leg.eType === 'move') {
+                    if (items.length > 0 && items[items.length - 1].type === 'station' && items[items.length - 1].name === leg.depS) {
+                        items[items.length - 1].depT = leg.depT || '';
+                        items[items.length - 1].depTrk = leg.depTrk || '';
+                    } else {
+                        items.push({ type: 'station', name: leg.depS, depT: leg.depT || '', depTrk: leg.depTrk || '', arrT: '', arrTrk: '', transport: leg.transport });
+                    }
+                    const f1 = parseInt(leg.fare) || 0;
+                    const ef1 = ((leg.transport === 'train' || leg.transport === 'bus') && leg.trainType !== 'express') ? 0 : (parseInt(leg.expFare) || 0);
+                    let fareTxt = '';
+                    if (f1 > 0) fareTxt += `<span class="fare-badge">運賃: ¥${f1.toLocaleString()}</span>`;
+                    if (ef1 > 0) fareTxt += `<span class="exp-fare-badge">特急券等: ¥${ef1.toLocaleString()}</span>`;
+                    if (f1 > 0 || ef1 > 0) fareTxt += `<span class="fare-badge-total">全員: ¥${((f1 + ef1) * passengers).toLocaleString()}</span>`;
+
+                    let seatTxt = (leg.carNum || leg.seatNum) ? `${leg.carNum ? leg.carNum + '号車 ' : ''}${leg.seatNum || ''}` : "";
+                    
+                    // 動的に生成されるカスタムインラインスタイルを取得
+                    let customStyle = getCustomStyleForTrain(leg.train);
+                    items.push({ type: 'move-line', transport: leg.transport, line: leg.line, train: leg.train, direct: leg.direct || '', seatInfo: seatTxt, memo: leg.memo || '', fareTxt: fareTxt, customStyle: customStyle });
+                    items.push({ type: 'station', name: leg.arrS, depT: '', depTrk: '', arrT: leg.arrT || '', arrTrk: leg.arrTrk || '', transport: leg.transport });
+                } else {
+                    const f2 = parseInt(leg.fare) || 0;
+                    const fareTxt = f2 > 0 ? `<span class="fare-badge">1人: ¥${f2.toLocaleString()}</span><span class="fare-badge-total">全員: ¥${(f2 * passengers).toLocaleString()}</span>` : '';
+                    items.push({ type: 'spot', name: leg.name, memo: leg.memo || '', fareTxt: fareTxt });
+                }
+            });
+
+            items.forEach((item) => {
+                if (item.type === 'station') {
+                    let timeContent = '';
+                    if (item.arrT) timeContent += `<span class="st-time-val color-${item.transport}">${item.arrT}</span>`;
+                    if (item.depT) timeContent += `<span class="st-time-val color-${item.transport}">${item.depT}</span>`;
+                    let timeBoxHtml = timeContent ? `<div class="st-time-box">${timeContent}</div>` : '';
+                    let trackHtml = '';
+                    if (item.arrTrk || item.depTrk) {
+                        trackHtml += `<div class="st-track-group">`;
+                        if (item.arrTrk) trackHtml += `<span class="st-track">${item.arrTrk}<span class="st-track-text">番着</span></span>`;
+                        if (item.depTrk) trackHtml += `<span class="st-track">${item.depTrk}<span class="st-track-text">番発</span></span>`;
+                        trackHtml += `</div>`;
+                    }
+                    h += `<div class="st-node">${timeBoxHtml}<div class="st-icon"></div><div class="st-info"><span class="st-name">${item.name}</span>${trackHtml}</div></div>`;
+                } else if (item.type === 'move-line') {
+                    let directHtml = item.direct ? `<span class="trans-direct">${item.direct}</span>` : '';
+                    let seatHtml = item.seatInfo ? `<br><span class="trans-seat-info">💺 ${item.seatInfo}</span>` : '';
+                    let memoHtml = item.memo ? `<div class="trans-memo">${item.memo}</div>` : '';
+                    // 取得したインラインスタイルをspanタグに適用
+                    h += `<div class="trans-box"><div class="t-line trans-line-${item.transport}"></div><div class="trans-detail"><b>${item.line}</b>${directHtml} ${item.fareTxt}<br><span class="custom-type-badge" style="${item.customStyle}">${item.train}</span>${seatHtml}${memoHtml}</div></div>`;
+                } else if (item.type === 'spot') {
+                    h += `<div class="spot-card"><b>${item.name}</b> ${item.fareTxt}<br><small>${item.memo || ''}</small></div>`;
+                }
+            });
+            list.innerHTML += h + `</div></div>`;
         });
     }
-    function addCustomColorRow(keyword, color) {
-        customColorSettings.push({ keyword, color });
-        saveCustomColorSettings();
-        renderColorSettingsList();
-    }
-    function updateColorKeyword(idx, val) { customColorSettings[idx].keyword = val.trim(); saveCustomColorSettings(); }
-    function updateColorHex(idx, val) { customColorSettings[idx].color = val; saveCustomColorSettings(); }
-    function deleteColorRow(idx) {
-        customColorSettings.splice(idx, 1);
-        saveCustomColorSettings();
-        renderColorSettingsList();
-    }
 
-    // 各種トグル開閉処理
-    function toggleCalc() { document.getElementById('calc-sidebar').classList.toggle('open'); }
-    function toggleColorSidebar() { document.getElementById('color-sidebar').classList.toggle('open'); }
-    function toggleFeedback() { document.getElementById('feedback-sidebar').classList.toggle('open'); }
-    
-    // --------------------------------------------------
-    // 要望・不具合報告フィードバック送信
-    // --------------------------------------------------
-    async function sendFeedback() {
-        const name = document.getElementById('fb-name').value || "匿名";
-        const email = document.getElementById('fb-email').value || "未入力";
-        const content = document.getElementById('fb-content').value.trim();
-        if (!content) { alert("内容を入力してください。"); return; }
+    async function shareTripToFirebase(id) {
+        const t = logs.find(log => log.id === id || log.firebaseId === id); 
+        if(!t) { alert("旅データが見つかりませんでした。"); return; }
+        
+        let rawPassword = prompt(`🔒 「${t.title}」の共有パスワードを設定してな！\n(開くときにこのパスワードが必要になります。制限しない場合は空欄でOK)`);
+        if (rawPassword === null) return; 
+        
+        let passwordHash = "";
+        if (rawPassword.trim() !== "") {
+            passwordHash = cyrb128(rawPassword.trim());
+        }
+
+        let targetFirebaseId = t.firebaseId || "";
+        if (!targetFirebaseId) {
+            const newDocRef = db.collection('trips').doc();
+            targetFirebaseId = newDocRef.id;
+        }
 
         try {
-            await db.collection('feedbacks').add({
-                name, email, content,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            await db.collection('trips').doc(targetFirebaseId).set({ 
+                title: t.title, memo: t.memo || "", start: t.start, end: t.end || "", passengers: t.passengers || 1, legs: t.legs,
+                passwordHash: passwordHash,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
             });
-            alert("要望・報告を送信しました。ありがとうございました！");
-            document.getElementById('fb-content').value = "";
-            toggleFeedback();
-        } catch (e) {
-            console.error(e);
-            alert("送信に失敗しました。");
+            
+            const shortSharedUrl = `${window.location.origin + window.location.pathname}?trip=${targetFirebaseId}`;
+            await navigator.clipboard.writeText(shortSharedUrl);
+            
+            t.firebaseId = targetFirebaseId; 
+            saveLocalLogs(); 
+            
+            let passMsg = passwordHash ? `【パスワード設定あり】\n他の人にURLを教える時は、パスワード（${rawPassword.trim()}）も一緒に教えてあげてな！` : `【パスワードなし（誰でも閲覧可能）】`;
+            alert(`「${t.title}」のデータをFirebaseに送信完了したで！\n\n${passMsg}\n\nコピーしたURL：\n${shortSharedUrl}`);
+        } catch (err) { 
+            alert("Firebaseへの保存に失敗しました: " + err.message); 
         }
     }
 
-    // --------------------------------------------------
-    // 計算機ロジック
-    // --------------------------------------------------
-    let calcExpression = "0";
-    function pressCalc(val) {
-        const screen = document.getElementById('calc-screen');
-        if (val === 'C') {
-            calcExpression = "0";
-        } else if (val === '=') {
-            try {
-                calcExpression = eval(calcExpression).toString();
-            } catch (e) {
-                calcExpression = "Error";
+    function saveTrip() {
+        const title = document.getElementById('trip-title').value.trim();
+        if (!title) { alert("旅のタイトルを入力してな！"); return; }
+        const sy = document.getElementById('sy').value; const sm = document.getElementById('sm').value; const sd = document.getElementById('sd').value;
+        if (!sy || !sm || !sd) { alert("日付を正しく入力してな！"); return; }
+        const startStr = `${sy}/${sm.padStart(2,'0')}/${sd.padStart(2,'0')}`;
+        
+        const ey = document.getElementById('ey').value; const em = document.getElementById('em').value; const ed = document.getElementById('ed').value;
+        let endStr = (ey && em && ed) ? `${ey}/${em.padStart(2,'0')}/${ed.padStart(2,'0')}` : "";
+        
+        const passengers = parseInt(document.getElementById('trip-passengers').value) || 1;
+        const tripMemo = document.getElementById('trip-memo').value.trim();
+        const legGroups = document.querySelectorAll('.leg-group');
+        if (legGroups.length === 0) { alert("行程を最低1つは追加してな！"); return; }
+        
+        let legsData = []; let valid = true;
+        legGroups.forEach((g, idx) => {
+            const eType = g.querySelector('input[type="radio"]:checked').value;
+            const editId = document.getElementById('edit-id').value;
+            let currentChecked = false;
+            if (editId) {
+                const existingTrip = logs.find(log => log.id === editId || log.firebaseId === editId);
+                if (existingTrip && existingTrip.legs && existingTrip.legs[idx]) currentChecked = !!existingTrip.legs[idx].checked;
+            }
+
+            if (eType === 'move') {
+                const transport = g.querySelector('.transport-type').value;
+                const trainType = g.querySelector('.train-type').value;
+                const line = g.querySelector('.line-name').value.trim();
+                const fare = g.querySelector('.leg-fare').value;
+                const expFare = g.querySelector('.leg-exp-fare').value;
+                const depS = g.querySelector('.dep-station').value.trim();
+                const depTrk = g.querySelector('.dep-track').value.trim();
+                const depT = g.querySelector('.dep-time').value;
+                const train = g.querySelector('.train-name').value.trim();
+                const direct = g.querySelector('.direct-name').value.trim();
+                const carNum = g.querySelector('.leg-car-num').value.trim();
+                const seatNum = g.querySelector('.leg-seat-num').value.trim();
+                const arrS = g.querySelector('.arr-station').value.trim();
+                const arrTrk = g.querySelector('.arr-track').value.trim();
+                const arrT = g.querySelector('.arr-time').value;
+                const memo = g.querySelector('.leg-memo-input').value.trim();
+                
+                if (transport !== 'walk' && !line) { alert("路線名を入力してな！"); valid = false; return; }
+                if (!depS || !arrS) { alert("発着駅を入力してな！"); valid = false; return; }
+                legsData.push({ eType, transport, trainType, line, fare, expFare, depS, depTrk, depT, train, direct, carNum, seatNum, arrS, arrTrk, arrT, memo, checked: currentChecked });
+            } else {
+                const name = g.querySelector('.spot-name-input').value.trim();
+                const trainType = g.querySelector('.spot-ui .train-type').value;
+                const fare = g.querySelector('.spot-ui .leg-fare').value;
+                const memo = g.querySelector('.spot-memo-input').value.trim();
+                if (!name) { alert("スポット名を入力してな！"); valid = false; return; }
+                legsData.push({ eType, name, trainType, fare, memo, checked: currentChecked });
+            }
+        });
+        
+        if (!valid) return;
+        const editId = document.getElementById('edit-id').value;
+        const customAdminId = document.getElementById('edit-id-input').value.trim();
+        const customAdminPass = document.getElementById('edit-pass-input').value.trim();
+
+        if (document.getElementById('main-form').classList.contains('editing-mode') && document.getElementById('admin-id-zone').style.display === "block") {
+            let updateFields = { title, memo: tripMemo, start: startStr, end: endStr, passengers, legs: legsData, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+            if(customAdminPass !== "") updateFields.passwordHash = cyrb128(customAdminPass);
+            db.collection('trips').doc(customAdminId).set(updateFields, { merge: true }).then(() => {
+                alert("Firebaseデータを上書き更新したで！"); location.reload();
+            });
+            return;
+        }
+
+        if (editId) {
+            const idx = logs.findIndex(log => log.id === editId || log.firebaseId === editId);
+            if (idx !== -1) {
+                logs[idx].title = title; logs[idx].memo = tripMemo; logs[idx].start = startStr; logs[idx].end = endStr; logs[idx].passengers = passengers; logs[idx].legs = legsData;
+                if (logs[idx].firebaseId) {
+                    db.collection('trips').doc(logs[idx].firebaseId).update({ title, memo: tripMemo, start: startStr, end: endStr, passengers, legs: legsData, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                }
             }
         } else {
-            if (calcExpression === "0" || calcExpression === "Error") {
-                calcExpression = val;
-            } else {
-                calcExpression += val;
-            }
+            logs.unshift({ id: 'trip_' + Date.now(), title, memo: tripMemo, start: startStr, end: endStr, passengers, legs: legsData });
         }
-        screen.value = calcExpression;
+        
+        saveLocalLogs();
+        document.getElementById('trip-title').value = ""; document.getElementById('trip-memo').value = "";
+        document.getElementById('sy').value = ""; document.getElementById('sm').value = ""; document.getElementById('sd').value = "";
+        document.getElementById('ey').value = ""; document.getElementById('em').value = ""; document.getElementById('ed').value = "";
+        document.getElementById('legs-container').innerHTML = ""; document.getElementById('edit-id').value = "";
+        document.getElementById('main-form').classList.remove('editing-mode'); document.getElementById('btn-cancel-edit').style.display = "none";
+        document.getElementById('btn-submit').innerText = "記録する！";
+        alert(editId ? "旅ログを修正したで！" : "新しい鉄旅を記録したで！");
     }
 
-    // --------------------------------------------------
-    // エスケープ処理
-    // --------------------------------------------------
-    function escapeHtml(str) {
-        if(!str) return "";
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    function editTrip(id) {
+        const t = logs.find(log => log.id === id || log.firebaseId === id); if (!t) return;
+        document.getElementById('edit-id').value = t.firebaseId ? t.firebaseId : t.id;
+        document.getElementById('admin-id-zone').style.display = "none";
+        document.getElementById('trip-title').value = t.title; document.getElementById('trip-memo').value = t.memo || ''; document.getElementById('trip-passengers').value = t.passengers || 1;
+        const s = t.start.split('/'); document.getElementById('sy').value = s[0]; document.getElementById('sm').value = s[1]; document.getElementById('sd').value = s[2];
+        if (t.end) { const e = t.end.split('/'); document.getElementById('ey').value = e[0]; document.getElementById('em').value = e[1]; document.getElementById('ed').value = e[2]; }
+        else { document.getElementById('ey').value = ''; document.getElementById('em').value = ''; document.getElementById('ed').value = ''; }
+        const container = document.getElementById('legs-container'); container.innerHTML = ''; t.legs.forEach(leg => addLeg(leg));
+        document.getElementById('main-form').classList.add('editing-mode'); document.getElementById('btn-cancel-edit').style.display = "inline-block";
+        document.getElementById('btn-submit').innerText = "修正内容を保存する！"; window.scrollTo(0, 0); updateFormTotalFare();
     }
 
-    // --------------------------------------------------
-    // 管理システム全データ処理関連
-    // --------------------------------------------------
-    function openAdminModal() { document.getElementById('admin-modal').style.display = "flex"; }
-    function closeAdminModal() { document.getElementById('admin-modal').style.display = "none"; }
+    function deleteTrip(id) {
+        if (confirm("ほんまにこの旅ログを削除してええの？")) {
+            const t = logs.find(log => log.id !== id && log.firebaseId !== id);
+            if (t && t.firebaseId) db.collection('trips').doc(t.firebaseId).delete();
+            logs = logs.filter(log => log.id !== id && log.firebaseId !== id); saveLocalLogs();
+        }
+    }
+
+    function exportAllDataText() {
+        if (logs.length === 0) { alert("保存されているデータがありません。"); return; }
+        navigator.clipboard.writeText(JSON.stringify(logs)).then(() => { alert("コピーに成功したで！"); });
+    }
+
+    function importDataText() {
+        const jsonStr = prompt("データを貼り付けてな："); if (!jsonStr) return;
+        try {
+            const parsed = JSON.parse(jsonStr); let targetTrips = Array.isArray(parsed) ? parsed : [parsed];
+            if (confirm("後ろに追加する？")) { logs = logs.concat(targetTrips); } else { logs = targetTrips; }
+            saveLocalLogs(); alert("取り込み成功！");
+        } catch (e) { alert("失敗しました。"); }
+    }
+
+    let calcInput = "0"; let calcOp = ""; let calcPrev = 0; let shouldResetScreen = false;
+    function toggleCalc() { document.getElementById('feedbackSidebar').classList.remove('open'); document.getElementById('colorSidebar').classList.remove('open'); document.getElementById('calcSidebar').classList.toggle('open'); }
+    function clearCalc() { calcInput = "0"; calcOp = ""; calcPrev = 0; updateCalcScreen(); }
+    function pressNum(num) {
+        if (shouldResetScreen) { calcInput = ""; shouldResetScreen = false; }
+        if (calcInput === "0" && num !== ".") calcInput = num; else calcInput += num;
+        updateCalcScreen();
+    }
+    function pressOp(op) { calcPrev = parseFloat(calcInput); calcOp = op; shouldResetScreen = true; }
+    function calculateResult() {
+        if (!calcOp) return; let current = parseFloat(calcInput); let res = 0;
+        if (calcOp === '+') res = calcPrev + current; else if (calcOp === '-') res = calcPrev - current; else if (calcOp === '*') res = calcPrev * current; else if (calcOp === '/') res = calcPrev / current;
+        calcInput = res.toString(); calcOp = ""; shouldResetScreen = true; updateCalcScreen();
+    }
+    function updateCalcScreen() { document.getElementById('calcScreen').value = calcInput; }
+    function toggleFeedback() { document.getElementById('calcSidebar').classList.remove('open'); document.getElementById('colorSidebar').classList.remove('open'); document.getElementById('feedbackSidebar').classList.toggle('open'); }
+    async function sendFeedback() {
+        const text = document.getElementById('feedbackText').value.trim(); if(!text) return;
+        await db.collection('feedbacks').add({ name: document.getElementById('feedbackName').value, email: document.getElementById('feedbackEmail').value, subject: document.getElementById('feedbackSubject').value, message: text, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        alert("送信したで！"); toggleFeedback();
+    }
+    function openAdminModal() { document.getElementById('adminModal').style.display = "flex"; }
+    function closeAdminModal() { document.getElementById('adminModal').style.display = "none"; }
     function checkAdminAuth() {
         if (document.getElementById('adminUser').value === "admin" && document.getElementById('adminPass').value === "tetsu2026") {
-            document.getElementById('adminAuthArea').style.display = "none"; document.getElementById('adminDashboardArea').style.display = "block"; adminLoadLogs();
+            document.getElementById('adminAuthArea').style.display = "none"; document.getElementById('adminDashboardArea').style.display = "block"; loadAdminFirebaseLogs();
         } else { alert("認証失敗！"); }
     }
-    async function adminLoadLogs() {
-        const listDiv = document.getElementById('admin-logs-list');
-        listDiv.innerHTML = '読み込み中...';
-        const snapshot = await db.collection('trips').orderBy('createdAt', 'desc').get();
-        listDiv.innerHTML = '';
+    async function loadAdminFirebaseLogs() {
+        const listDiv = document.getElementById('adminLogList'); listDiv.innerHTML = "";
+        const snapshot = await db.collection('trips').orderBy('updatedAt', 'desc').get();
         snapshot.forEach(doc => {
-            const id = doc.id;
-            const data = doc.data();
-            const item = document.createElement('div');
-            item.className = 'admin-log-item';
-            
-            const actualPass = data.password || data.passwordHash;
-            const passDisplay = actualPass ? `🔑 PW: ${actualPass}` : '🔓 パスワードなし';
-
-            item.innerHTML = `
-                <div>
-                    <strong>${escapeHtml(data.title)}</strong> [鍵:${actualPass ? '🔒' : '🔓'}]
-                    <div style="font-size: 11px; color: #666; margin-top: 2px;">${passDisplay}</div>
-                </div>
-                <div style="display: flex; gap: 5px;">
-                    <button class="btn-edit" onclick="adminLoadAndEdit('${id}')">編集</button>
-                    <button class="btn-delete" onclick="adminDeleteTrip('${id}', '${escapeHtml(data.title)}')">削除</button>
-                </div>
-            `;
+            const data = doc.data(); const id = doc.id;
+            const item = document.createElement('div'); item.className = 'admin-log-item';
+            item.innerHTML = `<div><strong>${data.title}</strong> [鍵:${data.passwordHash ? '🔒' : '🔓'}]</div><div><button class="btn-edit" onclick="adminLoadAndEdit('${id}')">編集</button></div>`;
             listDiv.appendChild(item);
         });
     }
@@ -1252,22 +1090,7 @@
         document.getElementById('trip-title').value = data.title; document.getElementById('trip-memo').value = data.memo || ''; document.getElementById('trip-passengers').value = data.passengers || 1;
         const container = document.getElementById('legs-container'); container.innerHTML = ''; data.legs.forEach(leg => addLeg(leg));
         document.getElementById('main-form').classList.add('editing-mode'); document.getElementById('btn-cancel-edit').style.display = "inline-block";
-    }
-
-    async function adminDeleteTrip(id, title) {
-        const confirmMessage = `【管理者権限】\n「${title}」の旅行記録を完全に削除します。\nこの操作は取り消せません。よろしいですか？`;
-        
-        if (confirm(confirmMessage)) {
-            try {
-                await db.collection('trips').doc(id).delete();
-                alert("旅行予定を完全に削除しました。");
-                adminLoadLogs(); // 管理画面のリストを更新
-                displayLogs();   // メイン画面の履歴リストも更新
-            } catch (e) {
-                console.error(e);
-                alert("削除に失敗しました。");
-            }
-        }
+        document.getElementById('btn-submit').innerText = "Firebaseのデータを直接上書き更新！";
     }
 </script>
 </body>
