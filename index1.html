@@ -1,15 +1,13 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
+<html lang="ja"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>マイ鉄旅ログ</title>
     <style>
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
-        .container { max-width: 650px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #005bac; padding: 20px; color: #333; }
+        .container { max-width: 650px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1 { color: #005bac; text-align: center; border-bottom: 3px solid #005bac; padding-bottom: 10px; }
-        .form-group { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; position: relative; }
-        .editing-mode { background: #fffde7 !important; border: 2px solid #fbc02d; }
+        .form-group { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; position: relative; }
+        .editing-mode { background: #87ff5e !important; border: 2px solid #fbc02d; }
         .entry-type-selector { margin-bottom: 15px; display: flex; gap: 10px; padding-right: 30px; }
         .entry-type-selector label { cursor: pointer; flex: 1; text-align: center; background: #eee; padding: 10px; border-radius: 6px; }
         .entry-type-selector input { display: none; }
@@ -76,7 +74,6 @@
         .color-air { color: #00a8e8 !important; }
         .color-ferry { color: #00838f !important; }
         
-        /* カスタム種別の基本装飾スタイル */
         .custom-type-badge { color: #ffffff !important; font-weight: bold; padding: 1px 5px; border-radius: 3px; }
         
         .spot-card { margin: 15px 0 15px -45px; background: #fffde7; border: 1px solid #f9e79f; padding: 12px 12px 12px 45px; border-radius: 8px; position: relative; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -104,7 +101,6 @@
         .btn-c.op { background: #ff9800; }
         .btn-c.eq { background: #e65100; }
         
-        /* 自由設定カラー用のサイドバーデザイン */
         .color-sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: #2c3e50; color: white; padding: 20px; box-shadow: -5px 0 15px rgba(0,0,0,0.3); transition: right 0.3s ease; z-index: 2000; box-sizing: border-box; overflow-y: auto; }
         .color-sidebar.open { right: 0; }
         .color-setting-row { display: flex; gap: 5px; align-items: center; margin-bottom: 8px; background: rgba(255,255,255,0.1); padding: 6px; border-radius: 6px; }
@@ -122,7 +118,6 @@
         .admin-box { background: white; width: 90%; max-width: 550px; max-height: 85vh; border-radius: 12px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); overflow-y: auto; position: relative; color: #333; }
         .admin-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; font-weight: bold; }
         .admin-log-item { background: #f5f5f5; padding: 10px; margin-top: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #3f51b5; }
-        .admin-log-info { font-size: 14px; }
 
         #password-lock-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 9999; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
         .lock-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
@@ -197,7 +192,7 @@
                 <select id="trip-passengers" style="margin-top: 4px;" onchange="updateFormTotalFare()">
                     <option value="1">1名</option>
                     <option value="2">2名</option>
-                    <option value="3" selected>3名</option>
+                    <option value="3" selected="">3名</option>
                     <option value="4">4名</option>
                     <option value="5">5名</option>
                 </select>
@@ -227,7 +222,82 @@
             </div>
         </div>
         
-        <div id="legs-container"></div>
+        <div id="legs-container"><div class="leg-group" draggable="true">
+            <div class="drag-handle">☰</div>
+            <button class="btn-remove-leg" onclick="this.parentElement.remove(); updateFormTotalFare();">×</button>
+            <div class="entry-type-selector">
+                <label><input type="radio" name="etype-1784786853887.5046" value="move" checked="" onchange="toggleLegUI(this)"><span>🏃 移動</span></label>
+                <label><input type="radio" name="etype-1784786853887.5046" value="spot" onchange="toggleLegUI(this)"><span>📍 スポット</span></label>
+            </div>
+            <div class="move-ui" style="display: block">
+                <div class="flex-row">
+                    <div>
+                        <label>手段</label>
+                        <select class="transport-type" onchange="toggleTransportFields(this)">
+                            <option value="train">鉄道</option>
+                            <option value="bus">バス</option>
+                            <option value="air">飛行機</option>
+                            <option value="ferry">フェリー</option>
+                            <option value="walk">徒歩</option>
+                        </select>
+                    </div>
+                    <div class="train-type-field" style="display: block;">
+                        <label class="train-type-label">予約</label>
+                        <select class="train-type" onchange="toggleTransportFields(this)">
+                            <option value="local" selected="">不要</option>
+                            <option value="express">必要</option>
+                        </select>
+                    </div>
+                    <div class="line-field" style="display: block;">
+                        <label class="line-label">路線名</label>
+                        <input type="text" class="line-name" value="">
+                    </div>
+                    <div class="fare-field" style="max-width: 110px; display: block;">
+                        <label>乗車券(1人)</label>
+                        <input type="number" class="leg-fare" min="0" style="text-align: right;" value="" oninput="updateFormTotalFare()">
+                    </div>
+                    <div class="exp-fare-field" style="max-width: 110px; display: none;">
+                        <label>特急券等(1人)</label>
+                        <input type="number" class="leg-exp-fare" min="0" style="text-align: right;" value="" oninput="updateFormTotalFare()">
+                    </div>
+                </div>
+                <div class="flex-row">
+                    <div><label class="dep-label">乗車駅</label><input type="text" class="dep-station" value=""></div>
+                    <div class="track-field" style="display: block;"><label class="dep-track-label">発のりば</label><input type="text" class="dep-track" value=""></div>
+                    <div><label>発車時刻</label><input type="time" class="dep-time" value=""></div>
+                </div>
+                <div class="flex-row">
+                    <div class="train-field" style="display: block;"><label class="train-label">列車名・種別・便名</label><input type="text" class="train-name" value=""></div>
+                    <div class="direct-field" style="display: block;"><label class="direct-label">直通・経由</label><input type="text" class="direct-name" value=""></div>
+                    <div class="seat-field car-field" style="max-width: 80px; display: none;"><label>号車</label><input type="text" class="leg-car-num" value=""></div>
+                    <div class="seat-field seat-num-field" style="display: none;"><label>座席番号</label><input type="text" class="leg-seat-num" value=""></div>
+                </div>
+                <div class="flex-row">
+                    <div><label class="arr-label">降車駅</label><input type="text" class="arr-station" value=""></div>
+                    <div class="track-field-arr" style="display: block;"><label class="arr-track-label">着のりば</label><input type="text" class="arr-track" value=""></div>
+                    <div><label>到着時刻</label><input type="time" class="arr-time" value=""></div>
+                </div>
+                <label class="memo-label">メモ</label>
+                <textarea class="leg-memo-input" rows="2"></textarea>
+            </div>
+            <div class="spot-ui" style="display: none">
+                <div class="flex-row">
+                    <div><label>スポット名</label><input type="text" class="spot-name-input" value=""></div>
+                    <div style="max-width: 120px;">
+                        <label>予約</label>
+                        <select class="train-type">
+                            <option value="local" selected="">不要</option>
+                            <option value="express">必要</option>
+                        </select>
+                    </div>
+                    <div style="max-width: 120px;">
+                        <label>費用(1人分)</label>
+                        <input type="number" class="leg-fare" min="0" style="text-align: right;" value="" oninput="updateFormTotalFare()">
+                    </div>
+                </div>
+                <label>メモ</label>
+                <textarea class="spot-memo-input" rows="2"></textarea>
+            </div></div></div>
         
         <button class="btn-add" onclick="addLeg()">＋ 行程を追加</button>
         <button class="btn-save" id="btn-submit" onclick="saveTrip()">記録する！</button>
@@ -241,14 +311,12 @@
 </div>
 
 <div class="floating-menu">
-    <!-- 種別文字とカラーを自由設定するサイドバーを開くボタン -->
     <button class="btn-float btn-color-toggle" onclick="toggleColorSidebar()" title="種別の色を設定">🎨</button>
     <button class="btn-float btn-calc-toggle" onclick="toggleCalc()" title="電卓を開く">🔢</button>
     <button class="btn-float btn-feedback-toggle" onclick="toggleFeedback()" title="フィードバックを送る">💬</button>
     <button class="btn-float btn-admin-toggle" onclick="openAdminModal()" title="管理者メニュー">🔑</button>
 </div>
 
-<!-- 自分でキーワードと色を何個でも設定・追加できるサイドバーパネル -->
 <div id="colorSidebar" class="color-sidebar">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h3 style="margin: 0; font-size:16px;">🎨 種別文字・カラー設定</h3>
@@ -256,7 +324,63 @@
     </div>
     <p style="font-size:11px; color:#ccc; margin-top:0;">「列車名・種別欄」にここで入力した文字が含まれている時、指定した背景色に切り替わります。</p>
     
-    <div id="color-settings-list"></div>
+    <div id="color-settings-list"><div class="color-setting-row">
+                <input type="text" value="新幹線" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(0, 'keyword', this.value)">
+                <input type="color" value="#003399" oninput="updateCustomColorRow(0, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(0)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="特急" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(1, 'keyword', this.value)">
+                <input type="color" value="#de1c24" oninput="updateCustomColorRow(1, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(1)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="しまかぜ" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(2, 'keyword', this.value)">
+                <input type="color" value="#de1c24" oninput="updateCustomColorRow(2, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(2)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="ひのとり" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(3, 'keyword', this.value)">
+                <input type="color" value="#de1c24" oninput="updateCustomColorRow(3, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(3)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="伊勢志摩ライナー" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(4, 'keyword', this.value)">
+                <input type="color" value="#de1c24" oninput="updateCustomColorRow(4, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(4)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="快速急行" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(5, 'keyword', this.value)">
+                <input type="color" value="#ffaa00" oninput="updateCustomColorRow(5, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(5)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="新快速" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(6, 'keyword', this.value)">
+                <input type="color" value="#0072bc" oninput="updateCustomColorRow(6, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(6)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="急行" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(7, 'keyword', this.value)">
+                <input type="color" value="#e65100" oninput="updateCustomColorRow(7, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(7)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="区間快速" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(8, 'keyword', this.value)">
+                <input type="color" value="#388e3c" oninput="updateCustomColorRow(8, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(8)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="大和路快速" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(9, 'keyword', this.value)">
+                <input type="color" value="#388e3c" oninput="updateCustomColorRow(9, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(9)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="関空快速" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(10, 'keyword', this.value)">
+                <input type="color" value="#388e3c" oninput="updateCustomColorRow(10, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(10)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="快速" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(11, 'keyword', this.value)">
+                <input type="color" value="#f57c00" oninput="updateCustomColorRow(11, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(11)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="区間急行" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(12, 'keyword', this.value)">
+                <input type="color" value="#4caf50" oninput="updateCustomColorRow(12, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(12)">削</button>
+            </div><div class="color-setting-row">
+                <input type="text" value="準急" style="flex:1; width:auto;" placeholder="文字(例:快速)" onchange="updateCustomColorRow(13, 'keyword', this.value)">
+                <input type="color" value="#2e7d32" oninput="updateCustomColorRow(13, 'color', this.value)">
+                <button class="btn-delete-setting" onclick="deleteCustomColorRow(13)">削</button>
+            </div></div>
     <button class="btn-add" style="background:#27ae60; color:white; font-size:13px; padding:6px; margin-top:5px;" onclick="addCustomColorRow('', '#005bac')">＋ 設定を追加</button>
 </div>
 
@@ -265,7 +389,7 @@
         <h3 style="margin: 0;">運賃計算電卓</h3>
         <button onclick="toggleCalc()" style="background:none; color:white; border:none; font-size:20px; cursor:pointer;">×</button>
     </div>
-    <input type="text" id="calcScreen" class="calc-screen" readonly value="0">
+    <input type="text" id="calcScreen" class="calc-screen" readonly="" value="0">
     <div class="calc-buttons">
         <button class="btn-c" style="grid-column: span 3;" onclick="clearCalc()">C</button>
         <button class="btn-c op" onclick="pressOp('+')">+</button>
@@ -305,7 +429,6 @@
 </div>
 
 <script>
-    // ユーザー定義の種別色をLocalStorageに保存して管理するロジック
     let customColorSettings = [
         { keyword: '新幹線', color: '#003399' },
         { keyword: '特急', color: '#de1c24' },
@@ -333,7 +456,7 @@
 
     function saveCustomColorSettings() {
         localStorage.setItem('my_tetsu_custom_colors', JSON.stringify(customColorSettings));
-        displayLogs(); // タイムラインの色設定にリアルタイムに反映
+        displayLogs();
     }
 
     function toggleColorSidebar() {
@@ -380,15 +503,14 @@
         renderColorSettingsSidebar();
     }
 
-    // 入力された文字に応じて動的に背景スタイルを返すように変更
     function getCustomStyleForTrain(trainName) {
-        if (!trainName) return 'background: #1976d2;'; // デフォルト普通色
+        if (!trainName) return 'background: #1976d2;';
         for (let setting of customColorSettings) {
             if (setting.keyword && trainName.includes(setting.keyword)) {
                 return `background: ${setting.color} !important;`;
             }
         }
-        return 'background: #1976d2;'; // 該当しない場合は通常色
+        return 'background: #1976d2;';
     }
 
     const firebaseConfig = {
@@ -424,7 +546,7 @@
     }
 
     window.onload = async () => { 
-        loadCustomColorSettings(); // 独自色設定を読み込み
+        loadCustomColorSettings();
         loadLocalLogs();
         initDragAndDrop();
         startRealtimeSync();
@@ -473,25 +595,7 @@
     }
 
     function applyImportedTrip(tripId, tripData) {
-        document.getElementById('trip-title').value = tripData.title;
-        document.getElementById('trip-passengers').value = tripData.passengers || 1;
-        document.getElementById('trip-memo').value = tripData.memo || '';
-        if (tripData.start) {
-            const s = tripData.start.split('/');
-            document.getElementById('sy').value = s[0] || '';
-            document.getElementById('sm').value = s[1] || '';
-            document.getElementById('sd').value = s[2] || '';
-        }
-        if (tripData.end) {
-            const e = tripData.end.split('/');
-            document.getElementById('ey').value = e[0] || '';
-            document.getElementById('em').value = e[1] || '';
-            document.getElementById('ed').value = e[2] || '';
-        }
-        const container = document.getElementById('legs-container');
-        container.innerHTML = '';
-        tripData.legs.forEach(leg => addLeg(leg));
-        
+        // ※ 修正：上の入力フォームにはデータを書き込まず、マイリスト（一覧）に追加・保存のみ行うように変更しました
         const importedTrip = {
             id: 'trip_' + Date.now(),
             firebaseId: tripId,
@@ -510,7 +614,7 @@
             logs.unshift(importedTrip);
         }
         saveLocalLogs();
-        alert(`「${tripData.title}」のプランを開いて、専用リストに保存したで！`);
+        alert(`「${tripData.title}」のプランをマイリストに追加したで！`);
         showMainApp();
     }
 
@@ -805,7 +909,6 @@
                     let titleText = leg.train ? leg.train : leg.line;
                     let sectionText = (leg.depS && leg.arrS) ? `（${leg.depS}${leg.depT ? ' ' + leg.depT + '発' : ''} → ${leg.arrS}${leg.arrT ? ' ' + leg.arrT + '着' : ''}）` : "";
                     
-                    // チェックリスト側も独自設定色を反映
                     let inlineStyle = getCustomStyleForTrain(leg.train);
                     reservationHtml += `<div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 0.95em;"><input type="checkbox" style="width: auto; margin-top: 4px; cursor: pointer;" ${isCheckedAttr} onchange="toggleCheckboxState('${trip.id}', ${legIdx}, this.checked)"><div><strong class="custom-type-badge" style="${inlineStyle}">${titleText}</strong>${sectionText}<br><span style="color: #555; font-size: 0.9em; margin-left: 2px;">💺 ${seatDetail.trim() || '座席指定なし'}</span></div></div>`;
                 } else if (leg.eType === 'spot' && leg.trainType === 'express') {
@@ -837,7 +940,6 @@
 
                     let seatTxt = (leg.carNum || leg.seatNum) ? `${leg.carNum ? leg.carNum + '号車 ' : ''}${leg.seatNum || ''}` : "";
                     
-                    // 動的に生成されるカスタムインラインスタイルを取得
                     let customStyle = getCustomStyleForTrain(leg.train);
                     items.push({ type: 'move-line', transport: leg.transport, line: leg.line, train: leg.train, direct: leg.direct || '', seatInfo: seatTxt, memo: leg.memo || '', fareTxt: fareTxt, customStyle: customStyle });
                     items.push({ type: 'station', name: leg.arrS, depT: '', depTrk: '', arrT: leg.arrT || '', arrTrk: leg.arrTrk || '', transport: leg.transport });
@@ -866,7 +968,6 @@
                     let directHtml = item.direct ? `<span class="trans-direct">${item.direct}</span>` : '';
                     let seatHtml = item.seatInfo ? `<br><span class="trans-seat-info">💺 ${item.seatInfo}</span>` : '';
                     let memoHtml = item.memo ? `<div class="trans-memo">${item.memo}</div>` : '';
-                    // 取得したインラインスタイルをspanタグに適用
                     h += `<div class="trans-box"><div class="t-line trans-line-${item.transport}"></div><div class="trans-detail"><b>${item.line}</b>${directHtml} ${item.fareTxt}<br><span class="custom-type-badge" style="${item.customStyle}">${item.train}</span>${seatHtml}${memoHtml}</div></div>`;
                 } else if (item.type === 'spot') {
                     h += `<div class="spot-card"><b>${item.name}</b> ${item.fareTxt}<br><small>${item.memo || ''}</small></div>`;
@@ -1093,5 +1194,5 @@
         document.getElementById('btn-submit').innerText = "Firebaseのデータを直接上書き更新！";
     }
 </script>
-</body>
-</html>
+
+</body></html>
